@@ -195,8 +195,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        // 👇 Permite cualquier origen (localhost, IP local, incluso dominios externos)
-        c.addAllowedOriginPattern("*");
+     // 👇 Permitir tu frontend Angular en local y en producción
+        c.setAllowedOrigins(List.of( 
+        		"http://localhost:4200",
+        		"https://seguridad-acceso-backend.onrender.com"
+        		));
+        // 👇 Permite cualquier origen (localhost, IP local, incluso dominios externos)  esto es para aceder de manera local de mi movil
+      //  c.addAllowedOriginPattern("*");
 
         // Métodos permitidos
         c.setAllowedMethods(List.of("GET","POST","PATCH","PUT","DELETE","OPTIONS"));
