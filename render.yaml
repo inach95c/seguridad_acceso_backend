@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: seguridad-backend
+    env: java
+    plan: free
+    branch: main
+    buildCommand: ./mvnw clean install
+    startCommand: java -jar target/*.jar
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:postgresql://ep-muddy-queen-aibevruw-pooler.c-4.us-east-1.aws.neon.tech:5432/neondb?sslmode=require
+      - key: SPRING_DATASOURCE_USERNAME
+        value: neondb_owner
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: npg_NYVUE1Px9QHd
+      - key: JWT_SECRET
+        value: ChangeThisSecretToAStrongOne1234567890
+      - key: JWT_EXPIRATION
+        value: "3600"
