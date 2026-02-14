@@ -198,7 +198,8 @@ public class SecurityConfig {
      // 👇 Permitir tu frontend Angular en local y en producción
         c.setAllowedOrigins(List.of( 
         		"http://localhost:4200",
-        		"https://seguridad-acceso-backend.onrender.com"
+        		//"https://seguridad-acceso-backend.onrender.com"
+        		 "https://seguridadaccesos.netlify.app"
         		));
         // 👇 Permite cualquier origen (localhost, IP local, incluso dominios externos)  esto es para aceder de manera local de mi movil
        // c.addAllowedOriginPattern("*");
