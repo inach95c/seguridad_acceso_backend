@@ -278,7 +278,7 @@ public class RegistroService {
 
         // URL pública (ajústala según tu entorno)
        //String baseUrl = "http://192.168.1.100:8080/uploads/registros/";
-        String baseUrl = " https://seguridad-acceso-backend.onrender.com/uploads/registros/";
+        String baseUrl = "https://seguridad-acceso-backend.onrender.com/uploads/registros/";
        
      // En tu servicio
      //   String baseUrl = "https://seguridad-accesos-api.onrender.com/uploads/registros/";
