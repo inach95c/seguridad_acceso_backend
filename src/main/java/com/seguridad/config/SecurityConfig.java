@@ -137,6 +137,8 @@ public class SecurityConfig {
 
                 // login
                 .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/ping").permitAll()
+
 
                 // 👇 permitir acceso público al webhook de Telegram
                 .requestMatchers("/api/telegram/webhook").permitAll()

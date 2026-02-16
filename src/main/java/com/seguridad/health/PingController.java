@@ -12,3 +12,6 @@ public class PingController {
         return ResponseEntity.ok("pong");
     }
 }
+
+
+// no es soportado por render en el plan gratuito
