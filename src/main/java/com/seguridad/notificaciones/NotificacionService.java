@@ -1,4 +1,4 @@
-/* // com/seguridad/notificaciones/NotificacionService.java
+ // com/seguridad/notificaciones/NotificacionService.java
 package com.seguridad.notificaciones;
 
 import com.seguridad.users.Usuario;
@@ -62,9 +62,9 @@ public class NotificacionService {
         }
     }
 }
-*/
 
 
+/*
 package com.seguridad.notificaciones;
 
 import com.seguridad.users.Usuario;
@@ -128,4 +128,4 @@ public class NotificacionService {
         }
     }
 }
-
+*/
