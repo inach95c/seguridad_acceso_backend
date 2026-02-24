@@ -35,15 +35,17 @@ public class AuthController {
     }
     
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Void> logout(@RequestBody Map<String, String> body) {
         String username = body.get("username");
-        Usuario usuario = usuarioRepository.findByUsername(username)
+
+        Usuario u = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        usuario.setActivo(false); // 👈 marcar inactivo
-        usuarioRepository.save(usuario);
+        u.setActivo(false);
+        usuarioRepository.save(u);
 
-        return ResponseEntity.ok("Logout exitoso");
+        return ResponseEntity.ok().build();
     }
+
 
 }

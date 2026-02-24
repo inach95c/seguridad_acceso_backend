@@ -8,8 +8,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+
+
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -17,11 +20,15 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioRepository usuarioRepository;
+
 
     public UsuarioController(UsuarioService usuarioService,
-                             PasswordEncoder passwordEncoder) {
+                             PasswordEncoder passwordEncoder,
+                             UsuarioRepository usuarioRepository) {
         this.usuarioService = usuarioService;
         this.passwordEncoder = passwordEncoder;
+        this.usuarioRepository = usuarioRepository;
     }
 
     // ============================================================
@@ -195,9 +202,12 @@ public class UsuarioController {
  
  // para saber usuarios activos
  @GetMapping("/active")
- public ResponseEntity<List<Usuario>> listarUsuariosActivos() {
-     return ResponseEntity.ok(usuarioService.listarUsuariosActivos());
+ public ResponseEntity<List<Usuario>> getActiveUsers() {
+     Instant limite = Instant.now().minusSeconds(1800); // últimos 30 minutos
+     List<Usuario> activos = usuarioRepository.findByLastSeenAfter(limite);
+     return ResponseEntity.ok(activos);
  }
+
 
 
 

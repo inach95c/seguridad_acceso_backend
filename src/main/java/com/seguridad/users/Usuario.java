@@ -54,6 +54,12 @@ public class Usuario {
 
     @Column(nullable = false)
     private Boolean activo = true;
+    
+    @Column(name = "last_seen")
+    private Instant lastSeen;
+    
+    
+
 
     @Column(name = "creado_por", length = 50, updatable = false)
     private String creadoPor;
@@ -88,6 +94,16 @@ public class Usuario {
     // =========================
     // Getters y Setters
     // =========================
+    
+    public Instant getLastSeen() {
+        return lastSeen;
+    }
+
+    public void setLastSeen(Instant lastSeen) {
+        this.lastSeen = lastSeen;
+    }
+
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

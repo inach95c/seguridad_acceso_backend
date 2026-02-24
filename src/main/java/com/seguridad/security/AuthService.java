@@ -4,6 +4,9 @@ import com.seguridad.security.dto.LoginRequest;
 import com.seguridad.security.dto.LoginResponse;
 import com.seguridad.users.Usuario;
 import com.seguridad.users.UsuarioRepository;
+
+import java.time.Instant;
+
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,6 +36,12 @@ public class AuthService {
 
         Usuario u = usuarioRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        
+     // 🔥 Marcar usuario como activo
+        u.setActivo(true); 
+    // 🔥 Actualizar lastSeen al momento del login 
+        u.setLastSeen(Instant.now());
+        usuarioRepository.save(u);
 
          String token = jwtUtil.generateToken(u.getUsername(), u.getRol().name());
        
