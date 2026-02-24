@@ -2,7 +2,13 @@ package com.seguridad.security;
 
 import com.seguridad.security.dto.LoginRequest;
 import com.seguridad.security.dto.LoginResponse;
+import com.seguridad.users.Usuario;
+import com.seguridad.users.UsuarioRepository;
+
 import jakarta.validation.Valid;
+
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,12 +18,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final UsuarioRepository usuarioRepository;
 
     @Value("${security.jwt.expiration-seconds}")
     private long expiresInSeconds;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService,UsuarioRepository usuarioRepository) {
         this.authService = authService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping("/login")
@@ -25,4 +33,17 @@ public class AuthController {
         LoginResponse resp = authService.login(req, expiresInSeconds);
         return ResponseEntity.ok(resp);
     }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setActivo(false); // 👈 marcar inactivo
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok("Logout exitoso");
+    }
+
 }

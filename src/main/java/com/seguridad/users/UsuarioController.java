@@ -192,6 +192,14 @@ public class UsuarioController {
              .orElse(ResponseEntity.notFound().build());
  }
 
+ 
+ // para saber usuarios activos
+ @GetMapping("/active")
+ public ResponseEntity<List<Usuario>> listarUsuariosActivos() {
+     return ResponseEntity.ok(usuarioService.listarUsuariosActivos());
+ }
+
+
 
 
     

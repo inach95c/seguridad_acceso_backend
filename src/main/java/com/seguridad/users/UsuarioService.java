@@ -419,5 +419,15 @@ public class UsuarioService {
 
         notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
     }
+    
+    
+    
+    // para saber usuarios activos
+    
+    public List<Usuario> listarUsuariosActivos() {
+        return usuarioRepository.findByActivoTrue();
+    }
+
+
 
 }

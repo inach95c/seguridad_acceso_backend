@@ -30,6 +30,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
         // Obtener todos los usuarios que tienen Telegram vinculado
         List<Usuario> findByTelegramIdIsNotNull();
+        
+        // para ver los usuarios activos
+        List<Usuario> findByActivoTrue();
+
 
 
 }
