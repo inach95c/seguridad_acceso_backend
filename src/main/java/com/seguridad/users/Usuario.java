@@ -90,6 +90,12 @@ public class Usuario {
     protected void onUpdate() {
         this.actualizadoEn = Instant.now();
     }
+    
+    @NotBlank
+    @Size(max = 50)
+    @Column(name = "tenant", nullable = false, length = 50)
+    private String tenant;
+
 
     // =========================
     // Getters y Setters
@@ -130,4 +136,8 @@ public class Usuario {
 
     public String getTelegramId() { return telegramId; }
     public void setTelegramId(String telegramId) { this.telegramId = telegramId; }
+    
+    public String getTenant() { return tenant; }
+    public void setTenant(String tenant) { this.tenant = tenant; }
+
 }

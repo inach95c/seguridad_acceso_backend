@@ -46,7 +46,9 @@ public class AuthService {
          String token = jwtUtil.generateToken(u.getUsername(), u.getRol().name());
        
 
-        return new LoginResponse(token, expiresInSeconds, u.getRol().name(), u.getUsername());
+         return new LoginResponse(token, expiresInSeconds, u.getRol().name(), u.getUsername(), u.getTenant());
+
+
     }
 
     // Utilidad para crear usuarios con password encriptado (si la necesitas)

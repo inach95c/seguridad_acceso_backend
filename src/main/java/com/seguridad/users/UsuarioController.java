@@ -67,6 +67,7 @@ public class UsuarioController {
         usuario.setUsername(dto.getUsername());
         usuario.setRol(dto.getRol());
         usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        usuario.setTenant(dto.getTenant()); 
 
         String creador = authentication.getName();
 

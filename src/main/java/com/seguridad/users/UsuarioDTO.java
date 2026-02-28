@@ -53,7 +53,8 @@ public class UsuarioDTO {
     @JsonProperty("role") // 👈 acepta "role" del JSON
     private Usuario.Rol rol;
     
-   
+    @JsonProperty("tenant") // 👈 nuevo campo 
+    private String tenant;
 
     // =========================
     // Constructores
@@ -63,9 +64,11 @@ public class UsuarioDTO {
     @JsonCreator
     public UsuarioDTO(@JsonProperty("username") String username,
                       @JsonProperty("password") String password,
-                      @JsonProperty("role") String role) {
+                      @JsonProperty("role") String role,
+                      @JsonProperty("tenant") String tenant) {
         this.username = username;
         this.password = password;
+        this.tenant = tenant;
         // Normalizar el valor recibido para que coincida con el enum
         if (role != null) {
             try {
@@ -104,5 +107,8 @@ public class UsuarioDTO {
     public void setRol(Usuario.Rol rol) {
         this.rol = rol;
     }
+    
+    public String getTenant() { return tenant; }
+    public void setTenant(String tenant) { this.tenant = tenant; }
 }
 
