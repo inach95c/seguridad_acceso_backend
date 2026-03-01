@@ -35,15 +35,15 @@ public class SeguridadAccesosApplication {
     CommandLineRunner init(UsuarioRepository usuarioRepository, BCryptPasswordEncoder encoder) {
         return args -> {
             // Si no existe el usuario admin, lo creamos
-            if (usuarioRepository.findByUsername("admin").isEmpty()) {
+            if (usuarioRepository.findByUsername("adminsys").isEmpty()) {
                 Usuario admin = new Usuario();
-                admin.setUsername("admin");
-                admin.setPasswordHash(encoder.encode("admin123")); // contraseña encriptada
+                admin.setUsername("adminsys");
+                admin.setPasswordHash(encoder.encode("AdminSys.123")); // contraseña encriptada
                 admin.setRol(Usuario.Rol.MASTER_ADMIN);
                 admin.setActivo(true);
 
                 usuarioRepository.save(admin);
-                System.out.println("Usuario admin creado con contraseña 'admin123'");
+              //  System.out.println("Usuario adminsys creado con contraseña 'AdminSys.123'");
             }
         };
     }
