@@ -194,7 +194,7 @@ public class SecurityConfig {
     */
     
     //solo pruebas locales
-    @Bean
+  /*  @Bean   // ok sin tenals
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
      // 👇 Permitir tu frontend Angular en local y en producción
@@ -221,7 +221,39 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", c);
         return source;
+    }*/
+    
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration c = new CorsConfiguration();
+
+        // 👇 Permitir Angular local y tus 3 frontends en Netlify
+        c.setAllowedOriginPatterns(List.of(
+            "http://localhost:4200",
+            "https://seguridadaccesos.netlify.app",
+            "https://seguridadaccesos01.netlify.app",
+            "https://seguridadaccesos02.netlify.app",
+            "https://seguridadaccesos03.netlify.app"
+        ));
+
+        // Métodos permitidos
+        c.setAllowedMethods(List.of("GET","POST","PATCH","PUT","DELETE","OPTIONS"));
+
+        // Headers permitidos
+        c.setAllowedHeaders(List.of("*"));
+
+        // Headers expuestos (para que Angular pueda leerlos)
+        c.setExposedHeaders(List.of("Authorization", "X-Tenant-ID"));
+
+        // Permitir credenciales
+        c.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", c);
+        return source;
     }
+
 
     
     
