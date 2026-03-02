@@ -138,6 +138,9 @@ public class SecurityConfig {
                 // login
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/ping").permitAll()
+                
+                // 👇 PERMITIR EL ENDPOINT PARA GENERAR HASHES Password
+                .requestMatchers("/encode").permitAll()
 
 
                 // 👇 permitir acceso público al webhook de Telegram
