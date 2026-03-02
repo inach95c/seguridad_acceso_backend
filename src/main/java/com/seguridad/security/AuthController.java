@@ -46,6 +46,13 @@ public class AuthController {
 
         return ResponseEntity.ok().build();
     }
+    
+    // esto es temporal. solo para generar las contrasenas de los tenalns
+    @GetMapping("/encode")
+    public String encode(@RequestParam String p) {
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(p);
+    }
+
 
 
 }

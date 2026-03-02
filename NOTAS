@@ -4,3 +4,7 @@ en produccion revisar esta linea en registroServicio
 
 String baseUrl = "http://192.168.1.100:8080/uploads/registros/";
 
+
+revisar en authcontroller essto 
+   // esto es temporal. solo para generar las contrasenas de los tenalns
+
