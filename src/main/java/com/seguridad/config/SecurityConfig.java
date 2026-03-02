@@ -201,7 +201,10 @@ public class SecurityConfig {
         c.setAllowedOrigins(List.of( 
         		"http://localhost:4200",
         		//"https://seguridad-acceso-backend.onrender.com"
-        		 "https://seguridadaccesos.netlify.app"
+        		 "https://seguridadaccesos.netlify.app",
+        		 "https://empresa1.netlify.app", // frontend cliente1
+        		 "https://empresa2.netlify.app", // frontend cliente2
+        		 "https://empresa3.netlify.app" // frontend cliente3
         		));
         // 👇 Permite cualquier origen (localhost, IP local, incluso dominios externos)  esto es para aceder de manera local de mi movil
        // c.addAllowedOriginPattern("*");
