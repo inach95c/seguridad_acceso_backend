@@ -45,6 +45,10 @@ public class Destino {
     @Column(name = "creado_por", nullable = false, length = 50)
     private String creadoPor;
 
+    @NotBlank
+    @Column(name = "tenant", nullable = false, length = 50)
+    private String tenant;
+
 
     
 
@@ -55,15 +59,17 @@ public class Destino {
     }
 
     public Destino(Long id, String nombre, String descripcion, Boolean activo,
-                   Instant creadoEn, Instant actualizadoEn) {
-        this.id = id;
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.activo = activo;
-        this.creadoEn = creadoEn;
-        this.actualizadoEn = actualizadoEn;
-    //    this.creadoPor=creadoPor;
-    }
+            Instant creadoEn, Instant actualizadoEn, String creadoPor, String tenant) {
+ this.id = id;
+ this.nombre = nombre;
+ this.descripcion = descripcion;
+ this.activo = activo;
+ this.creadoEn = creadoEn;
+ this.actualizadoEn = actualizadoEn;
+ //this.creadoPor = creadoPor;
+ this.tenant = tenant;
+}
+
 
     // =========================
     // Getters y Setters
@@ -123,4 +129,13 @@ public class Destino {
 	public void setCreadoPor(String creadoPor) {
 		this.creadoPor = creadoPor;
 	}
+	
+	public String getTenant() {
+	    return tenant;
+	}
+
+	public void setTenant(String tenant) {
+	    this.tenant = tenant;
+	}
+
 }
