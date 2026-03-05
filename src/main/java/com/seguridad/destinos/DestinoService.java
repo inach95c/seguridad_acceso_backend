@@ -2,6 +2,9 @@ package com.seguridad.destinos;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.seguridad.config.TenantContext;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -32,9 +35,15 @@ public class DestinoService {
 
 
     // Listar destinos activos
-    public List<Destino> listarActivos() {
+   /* public List<Destino> listarActivos() {
         return destinoRepository.findByActivoTrue();
+    }*/
+    
+    public List<Destino> listarActivos() {
+        String tenantId = TenantContext.getTenantId(); // 👈 obtiene el tenant actual
+        return destinoRepository.findByActivoTrueAndTenant(tenantId);
     }
+
 
     // Desactivar destino
     public void desactivarDestino(Long id) {

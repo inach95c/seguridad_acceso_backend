@@ -4,7 +4,87 @@ en produccion revisar esta linea en registroServicio
 
 String baseUrl = "http://192.168.1.100:8080/uploads/registros/";
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////
 revisar en authcontroller essto 
    // esto es temporal. solo para generar las contrasenas de los tenalns
+   
+   ///////////////////////////////////////////////////////////////////////////////////////////
+   importante para sass
+   
+   🟦 Multi‑tenant: corrección de contraseñas y habilitación del generador BCrypt
+1. Problema detectado
+Los usuarios de cada tenant (Juan, María, Pedro) no podían iniciar sesión porque las contraseñas almacenadas en sus bases no eran hashes BCrypt válidos, lo que provocaba errores 500 en el login.
 
+Spring Security solo acepta contraseñas en formato BCrypt.
+
+2. Solución implementada
+Se creó un endpoint temporal en el backend para generar hashes BCrypt directamente desde el servidor:
+
+java
+@GetMapping("/encode")
+public String encode(@RequestParam String p) {
+    return new BCryptPasswordEncoder().encode(p);
+}
+Este endpoint permite generar contraseñas válidas sin necesidad de consola en Render.
+
+3. Ajustes en seguridad
+Para que /api/auth/encode funcione correctamente:
+
+Se agregó como endpoint público en SecurityConfig:
+
+java
+.requestMatchers("/api/auth/encode").permitAll()
+Se excluyó de los filtros JwtAuthFilter y SecurityAlertFilter para evitar validaciones de JWT o tenant:
+
+java
+String path = request.getRequestURI();
+if (path.equals("/api/auth/encode")) {
+    filterChain.doFilter(request, response);
+    return;
+}
+Esto evita que los filtros generen errores 500 antes de llegar al controlador.
+
+4. Generación de hashes BCrypt
+Se generaron los hashes desde el navegador:
+
+Código
+/api/auth/encode?p=CONTRASENA
+Resultados:
+
+Juan → $2a$10$iGa1.z83YqzIS7Ce1ywGse7NxTMg9Jtcxv6rJDqISNniA8e.yeSbu
+
+María → $2a$10$CISXK9cM5PAYO0Gf901D0OTsfWVX.BiEPa6rHdUsdwV/3AZ6NP/zK
+
+Pedro → $2a$10$io/d4Dy78yrpVU7W3M7UW.H2rHKpA6N8bsaJD0QjLNxUjeWeStUW.
+
+5. Actualización de contraseñas en cada tenant
+La columna correcta es password_hash.
+
+cliente1_db (Juan)
+sql
+UPDATE usuarios
+SET password_hash = '$2a$10$iGa1.z83YqzIS7Ce1ywGse7NxTMg9Jtcxv6rJDqISNniA8e.yeSbu'
+WHERE username = 'juan';
+cliente2_db (María)
+sql
+UPDATE usuarios
+SET password_hash = '$2a$10$CISXK9cM5PAYO0Gf901D0OTsfWVX.BiEPa6rHdUsdwV/3AZ6NP/zK'
+WHERE username = 'maria';
+cliente3_db (Pedro)
+sql
+UPDATE usuarios
+SET password_hash = '$2a$10$io/d4Dy78yrpVU7W3M7UW.H2rHKpA6N8bsaJD0QjLNxUjeWeStUW.'
+WHERE username = 'pedro';
+6. Resultado final
+Los tres usuarios pueden iniciar sesión correctamente.
+
+Cada frontend envía su tenant fijo (cliente1, cliente2, cliente3).
+
+El backend enruta a la base correcta con MultiTenantRoutingDataSource.
+
+Las contraseñas ahora cumplen con BCrypt y Spring Security las valida sin errores.
+
+El endpoint /api/auth/encode quedó operativo para generar contraseñas cuando se necesiten.
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
