@@ -1,5 +1,3 @@
-
-
 package com.seguridad.users;
 
 import org.springframework.http.HttpStatus;
@@ -12,8 +10,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-
-
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -21,7 +17,6 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
-
 
     public UsuarioController(UsuarioService usuarioService,
                              PasswordEncoder passwordEncoder,
@@ -67,7 +62,7 @@ public class UsuarioController {
         usuario.setUsername(dto.getUsername());
         usuario.setRol(dto.getRol());
         usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
-        usuario.setTenant(dto.getTenant()); 
+        usuario.setTenant(dto.getTenant()); // 👈 tenant obligatorio
 
         String creador = authentication.getName();
 
@@ -113,41 +108,41 @@ public class UsuarioController {
         return ResponseEntity.ok("Usuario desactivado por " + actualizador);
     }
 
- // ============================================================
- // ELIMINAR USUARIO
- // ============================================================
- @DeleteMapping("/{id}")
- public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id,
-                                             Authentication authentication) {
-     if (authentication == null) {
-         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-     }
+    // ============================================================
+    // ELIMINAR USUARIO
+    // ============================================================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id,
+                                                Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-     String actualizador = authentication.getName();
-     usuarioService.eliminarUsuario(id, actualizador);
+        String actualizador = authentication.getName();
+        usuarioService.eliminarUsuario(id, actualizador);
 
-     return ResponseEntity.noContent().build(); // ✅ 204 No Content
- }
+        return ResponseEntity.noContent().build(); // ✅ 204 No Content
+    }
 
- // ============================================================
- // ELIMINAR BITÁCORA DE UN USUARIO
- // ============================================================
- @DeleteMapping("/{id}/bitacora")
- public ResponseEntity<Void> eliminarBitacora(@PathVariable Long id,
-                                              Authentication authentication) {
-     if (authentication == null) {
-         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-     }
+    // ============================================================
+    // ELIMINAR BITÁCORA DE UN USUARIO
+    // ============================================================
+    @DeleteMapping("/{id}/bitacora")
+    public ResponseEntity<Void> eliminarBitacora(@PathVariable Long id,
+                                                 Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-     String actualizador = authentication.getName();
-     usuarioService.eliminarBitacora(id, actualizador);
+        String actualizador = authentication.getName();
+        usuarioService.eliminarBitacora(id, actualizador);
 
-     return ResponseEntity.noContent().build(); // ✅ 204 No Content
- }
+        return ResponseEntity.noContent().build(); // ✅ 204 No Content
+    }
 
-    
-    
-    // para desactivar y activar usuaarioList
+    // ============================================================
+    // CAMBIAR ESTADO (activar/desactivar)
+    // ============================================================
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> cambiarEstado(@PathVariable Long id,
                                            @RequestBody Map<String, Boolean> body,
@@ -170,60 +165,43 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
-    
- // =========================
- // ✏️ Editar/Actualizar usuario (FINAL)
- // =========================
- @PutMapping("/{id}")
- public ResponseEntity<?> actualizarUsuario(@PathVariable Long id,
-                                            @RequestBody Map<String, Object> body,
-                                            Authentication authentication) {
+    // ============================================================
+    // ACTUALIZAR USUARIO (Map)
+    // ============================================================
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id,
+                                               @RequestBody Map<String, Object> body,
+                                               Authentication authentication) {
 
-     if (authentication == null) {
-         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                 .body("No autenticado");
-     }
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("No autenticado");
+        }
 
-     String actualizador = authentication.getName();
+        String actualizador = authentication.getName();
 
-     usuarioService.actualizarUsuario(id, body, actualizador);
+        usuarioService.actualizarUsuario(id, body, actualizador);
 
-     return ResponseEntity.ok().build();
- }
+        return ResponseEntity.ok().build();
+    }
 
- 
- 
- @GetMapping("/id/{id}")
- public ResponseEntity<Usuario> getUsuarioById(@PathVariable Long id) {
-     return usuarioService.findById(id)
-             .map(ResponseEntity::ok)
-             .orElse(ResponseEntity.notFound().build());
- }
+    // ============================================================
+    // BUSCAR POR ID
+    // ============================================================
+    @GetMapping("/id/{id}")
+    public ResponseEntity<Usuario> getUsuarioById(@PathVariable Long id) {
+        return usuarioService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
- 
- // para saber usuarios activos
- @GetMapping("/active")
- public ResponseEntity<List<Usuario>> getActiveUsers() {
-     Instant limite = Instant.now().minusSeconds(1800); // últimos 30 minutos
-     List<Usuario> activos = usuarioRepository.findByLastSeenAfter(limite);
-     return ResponseEntity.ok(activos);
- }
-
-
-
-
-
-    
+    // ============================================================
+    // LISTAR USUARIOS ACTIVOS (últimos 30 min)
+    // ============================================================
+    @GetMapping("/active")
+    public ResponseEntity<List<Usuario>> getActiveUsers() {
+        Instant limite = Instant.now().minusSeconds(1800); // últimos 30 minutos
+        List<Usuario> activos = usuarioRepository.findByLastSeenAfter(limite);
+        return ResponseEntity.ok(activos);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-

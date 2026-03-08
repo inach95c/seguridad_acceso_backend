@@ -5,12 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.Instant;
 
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "destinos", indexes = {
         @Index(name = "idx_destinos_activo", columnList = "activo")
@@ -40,7 +39,7 @@ public class Destino {
     @UpdateTimestamp
     @Column(name = "actualizado_en")
     private Instant actualizadoEn;
-    
+
     @NotBlank
     @Column(name = "creado_por", nullable = false, length = 50)
     private String creadoPor;
@@ -49,27 +48,10 @@ public class Destino {
     @Column(name = "tenant", nullable = false, length = 50)
     private String tenant;
 
-
-    
-
-	// =========================
-    // Constructores
     // =========================
-    public Destino() {
-    }
-
-    public Destino(Long id, String nombre, String descripcion, Boolean activo,
-            Instant creadoEn, Instant actualizadoEn, String creadoPor, String tenant) {
- this.id = id;
- this.nombre = nombre;
- this.descripcion = descripcion;
- this.activo = activo;
- this.creadoEn = creadoEn;
- this.actualizadoEn = actualizadoEn;
- //this.creadoPor = creadoPor;
- this.tenant = tenant;
-}
-
+    // Constructor vacío (ÚNICO PERMITIDO)
+    // =========================
+    public Destino() {}
 
     // =========================
     // Getters y Setters
@@ -121,21 +103,20 @@ public class Destino {
     public void setActualizadoEn(Instant actualizadoEn) {
         this.actualizadoEn = actualizadoEn;
     }
-    
+
     public String getCreadoPor() {
-		return creadoPor;
-	}
+        return creadoPor;
+    }
 
-	public void setCreadoPor(String creadoPor) {
-		this.creadoPor = creadoPor;
-	}
-	
-	public String getTenant() {
-	    return tenant;
-	}
+    public void setCreadoPor(String creadoPor) {
+        this.creadoPor = creadoPor;
+    }
 
-	public void setTenant(String tenant) {
-	    this.tenant = tenant;
-	}
+    public String getTenant() {
+        return tenant;
+    }
 
+    public void setTenant(String tenant) {
+        this.tenant = tenant;
+    }
 }

@@ -31,4 +31,11 @@ public class Turno {
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @NotBlank
+    @Column(name = "tenant", nullable = false, length = 50)
+    private String tenant;
+    
+    
+    
 }

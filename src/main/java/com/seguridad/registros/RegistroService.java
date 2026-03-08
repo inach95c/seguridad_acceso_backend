@@ -1,9 +1,6 @@
-
-
-
-
 package com.seguridad.registros;
 
+import com.seguridad.config.TenantContext;
 import com.seguridad.destinos.Destino;
 import com.seguridad.destinos.DestinoRepository;
 import com.seguridad.notificaciones.NotificacionService;
@@ -93,6 +90,9 @@ public class RegistroService {
         registro.setEstado(Registro.Estado.SALIDA_PENDIENTE);
         registro.setIngresoFechaHora(Instant.now());
         registro.setUsuarioEntrada(usuarioActual);
+
+        // 👇 **ASIGNAR TENANT (OBLIGATORIO PARA MULTI‑TENANT)**
+        registro.setTenant(TenantContext.getTenantId());
 
         Registro guardado = registroRepository.save(registro);
 
@@ -184,5 +184,3 @@ public class RegistroService {
         return registroRepository.findByEstado(Registro.Estado.COMPLETADO);
     }
 }
-
-

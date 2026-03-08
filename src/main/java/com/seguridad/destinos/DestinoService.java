@@ -20,30 +20,22 @@ public class DestinoService {
         this.destinoRepository = destinoRepository;
     }
 
-  /*  // Crear destino nuevo
-    public Destino crearDestino(Destino destino) {
-        return destinoRepository.save(destino);
-    }*/
-
-    // Crear destino nuevo con auditoría de usuario
+    // Crear destino nuevo con auditoría y tenant
     public Destino crearDestino(Destino destino) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth != null ? auth.getName() : "sistema";
-        destino.setCreadoPor(username);   // 👈 nuevo campo en la entidad
+
+        destino.setCreadoPor(username);                     // Auditoría
+        destino.setTenant(TenantContext.getTenantId());     // Multi‑tenant
+
         return destinoRepository.save(destino);
     }
 
-
-    // Listar destinos activos
-   /* public List<Destino> listarActivos() {
-        return destinoRepository.findByActivoTrue();
-    }*/
-    
+    // Listar destinos activos por tenant
     public List<Destino> listarActivos() {
-        String tenantId = TenantContext.getTenantId(); // 👈 obtiene el tenant actual
+        String tenantId = TenantContext.getTenantId();
         return destinoRepository.findByActivoTrueAndTenant(tenantId);
     }
-
 
     // Desactivar destino
     public void desactivarDestino(Long id) {
@@ -52,12 +44,11 @@ public class DestinoService {
         destino.setActivo(false);
         destinoRepository.save(destino);
     }
-    
- // Eliminar destino definitivamente
+
+    // Eliminar destino definitivamente
     public void eliminarDestino(Long id) {
         Destino destino = destinoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Destino no encontrado"));
         destinoRepository.delete(destino);
     }
-
 }

@@ -14,16 +14,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/metricas")
 @PreAuthorize("hasAnyRole('GERENTE_ADMIN','MASTER_ADMIN')")
-//@PreAuthorize("hasAnyAuthority('ROLE_GERENTE_ADMIN','ROLE_MASTER_ADMIN')")
 public class MetricasController {
 
     private final MetricasService metricasService;
-    private final RegistroRepository registroRepository; // 👈 nuevo
-    private final DestinoRepository destinoRepository; // 👈 nuevo
+    private final RegistroRepository registroRepository;
+    private final DestinoRepository destinoRepository;
 
-    public MetricasController(MetricasService metricasService, RegistroRepository registroRepository, DestinoRepository destinoRepository) {
+    public MetricasController(MetricasService metricasService,
+                              RegistroRepository registroRepository,
+                              DestinoRepository destinoRepository) {
         this.metricasService = metricasService;
-        this.registroRepository = registroRepository; // 👈 inyección
+        this.registroRepository = registroRepository;
         this.destinoRepository = destinoRepository;
     }
 
@@ -35,31 +36,26 @@ public class MetricasController {
             @RequestParam Instant inicio,
             @RequestParam Instant fin,
             @RequestParam(defaultValue = "24") int umbralHoras) {
-        return ResponseEntity.ok(metricasService.calcularPermanenciaPorChapa(inicio, fin, umbralHoras));
+
+        return ResponseEntity.ok(
+                metricasService.calcularPermanenciaPorChapa(inicio, fin, umbralHoras)
+        );
     }
 
     // =========================
-    // Reincidencias
+    // Reincidencias por placa
     // =========================
-   /* @GetMapping("/reincidencias")
-    public ResponseEntity<ReincidenciasDTO> getReincidencias(
-            @RequestParam List<String> placas,
+    @GetMapping("/reincidencias-por-placa")
+    public ResponseEntity<ReincidenciaPorPlacaDTO> getReincidenciaPorPlaca(
+            @RequestParam String placa,
             @RequestParam int umbral,
             @RequestParam Instant inicio,
             @RequestParam Instant fin) {
-        return ResponseEntity.ok(metricasService.calcularReincidencias(placas, umbral, inicio, fin));
-    }*/
-     
-        @GetMapping("/reincidencias-por-placa")
-        public ResponseEntity<ReincidenciaPorPlacaDTO> getReincidenciaPorPlaca(
-                @RequestParam String placa,
-                @RequestParam int umbral,
-                @RequestParam Instant inicio,
-                @RequestParam Instant fin) {
-            return ResponseEntity.ok(metricasService.calcularReincidenciaPorPlaca(placa, umbral, inicio, fin));
-        }
-    
 
+        return ResponseEntity.ok(
+                metricasService.calcularReincidenciaPorPlaca(placa, umbral, inicio, fin)
+        );
+    }
 
     // =========================
     // Turnos
@@ -68,7 +64,10 @@ public class MetricasController {
     public ResponseEntity<TurnosDTO> getTurnos(
             @RequestParam Instant inicio,
             @RequestParam Instant fin) {
-        return ResponseEntity.ok(metricasService.calcularTurnos(inicio, fin));
+
+        return ResponseEntity.ok(
+                metricasService.calcularTurnos(inicio, fin)
+        );
     }
 
     // =========================
@@ -79,7 +78,10 @@ public class MetricasController {
             @RequestParam Instant inicio,
             @RequestParam Instant fin,
             @RequestParam(defaultValue = "mensual") String granularidad) {
-        return ResponseEntity.ok(metricasService.calcularVisitantesPorTipo(inicio, fin, granularidad));
+
+        return ResponseEntity.ok(
+                metricasService.calcularVisitantesPorTipo(inicio, fin, granularidad)
+        );
     }
 
     // =========================
@@ -89,50 +91,54 @@ public class MetricasController {
     public ResponseEntity<List<RankingItemDTO>> getRankingDestinos(
             @RequestParam Instant inicio,
             @RequestParam Instant fin) {
-        return ResponseEntity.ok(metricasService.rankingDestinos(inicio, fin));
+
+        return ResponseEntity.ok(
+                metricasService.rankingDestinos(inicio, fin)
+        );
     }
 
     // =========================
     // Actividad de usuarios
     // =========================
     @GetMapping("/actividad-usuarios")
-    public List<UsuariosActividadDTO> getActividadUsuarios() {
-    	// Spring Boot convierte automáticamente esta lista en JSON plano
-    	return metricasService.actividadUsuarios();
-        }
-       
+    public ResponseEntity<List<UsuariosActividadDTO>> getActividadUsuarios(
+            @RequestParam Instant inicio,
+            @RequestParam Instant fin) {
+
+        return ResponseEntity.ok(
+                metricasService.actividadUsuarios(inicio, fin)
+        );
+    }
 
     // =========================
     // Anomalías
     // =========================
-    
-        @GetMapping("/anomalias")
-        public AnomaliasDTO obtenerAnomalias() {
-            return metricasService.obtenerAnomalias();
-        }
-    
+    @GetMapping("/anomalias")
+    public ResponseEntity<AnomaliasDTO> obtenerAnomalias() {
+        return ResponseEntity.ok(metricasService.obtenerAnomalias());
+    }
 
     // =========================
     // Cortes
     // =========================
+    @GetMapping("/cortes")
+    public ResponseEntity<CortesDTO> obtenerCortes() {
+        return ResponseEntity.ok(metricasService.obtenerCortes());
+    }
 
-            @GetMapping("/cortes")
-            public CortesDTO obtenerCortes() {
-                return metricasService.obtenerCortes();
-            }
-    
-    
-    // otros
-    
+    // =========================
+    // Otros
+    // =========================
     @GetMapping("/placas")
-    public ResponseEntity<List<String>> getPlacasRegistradas() {
-        return ResponseEntity.ok(registroRepository.findDistinctPlacas());
-    }
-    
-    @GetMapping("/destinos")
-    public ResponseEntity<List<String>> getDestinosRegistrados() {
-        return ResponseEntity.ok(destinoRepository.findDistinctDestinos());
+    public ResponseEntity<List<String>> getPlacasRegistradas(
+            @RequestHeader("X-Tenant-ID") String tenant) {
+        return ResponseEntity.ok(registroRepository.findDistinctPlacas(tenant));
     }
 
+    @GetMapping("/destinos")
+    public ResponseEntity<List<String>> getDestinosRegistrados(
+            @RequestHeader("X-Tenant-ID") String tenant) {
+        return ResponseEntity.ok(destinoRepository.findDistinctDestinos(tenant));
+    }
 
 }

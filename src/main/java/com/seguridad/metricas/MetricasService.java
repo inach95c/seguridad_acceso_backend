@@ -5,6 +5,7 @@ import com.seguridad.registros.Registro;
 import com.seguridad.registros.RegistroRepository;
 import com.seguridad.users.BitacoraRepository;
 import com.seguridad.users.UsuarioRepository;
+import com.seguridad.config.TenantContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,10 @@ import java.util.stream.Collectors;
 public class MetricasService {
 
     private final RegistroRepository registroRepository;
-    
+
     @Autowired 
     private UsuarioRepository usuarioRepository;
-    
+
     @Autowired 
     private BitacoraRepository bitacoraRepository;
 
@@ -37,20 +38,27 @@ public class MetricasService {
     // Permanencia por chapa
     // =========================
     public List<PermanenciaPorChapaDTO> calcularPermanenciaPorChapa(Instant inicio, Instant fin, int umbralHoras) {
-        List<Object[]> resultados = registroRepository.permanenciaPorChapa(inicio, fin);
+
+        String tenant = TenantContext.getTenantId();
+
+        List<Object[]> resultados = registroRepository.permanenciaPorChapa(inicio, fin, tenant);
 
         List<PermanenciaPorChapaDTO> lista = new ArrayList<>();
         for (Object[] fila : resultados) {
             String placa = (String) fila[0];
-            String tipoVisitante = (String) fila[1]; // 👈 ahora sí existe en la query
+            String tipoVisitante = (String) fila[1];
             Double promedio = fila[2] != null ? ((Number) fila[2]).doubleValue() : 0.0;
             Long max = fila[3] != null ? ((Number) fila[3]).longValue() : 0L;
             Long min = fila[4] != null ? ((Number) fila[4]).longValue() : 0L;
-            Boolean sospechoso = fila[5] != null ? (Boolean) fila[5] : false; // 👈 tomado de BD
-            Long casosLargos = registroRepository.countPermanenciaOverUmbralByPlaca(placa, inicio, fin, umbralHoras);
-           // Boolean sospechoso = max > 48; // 👈 criterio ejemplo 
-            
-            lista.add(new PermanenciaPorChapaDTO(placa, tipoVisitante, promedio, max, min, casosLargos,sospechoso));
+            Boolean sospechoso = fila[5] != null ? (Boolean) fila[5] : false;
+
+            Long casosLargos = registroRepository.countPermanenciaOverUmbralByPlaca(
+                    placa, inicio, fin, umbralHoras, tenant
+            );
+
+            lista.add(new PermanenciaPorChapaDTO(
+                    placa, tipoVisitante, promedio, max, min, casosLargos, sospechoso
+            ));
         }
         return lista;
     }
@@ -59,7 +67,10 @@ public class MetricasService {
     // Permanencia por Tipo
     // =========================
     public List<PermanenciaPorTipoDTO> calcularPermanenciaPorTipo(Instant inicio, Instant fin, int umbralHoras) {
-        List<Object[]> resultados = registroRepository.permanenciaPorTipo(inicio, fin);
+
+        String tenant = TenantContext.getTenantId();
+
+        List<Object[]> resultados = registroRepository.permanenciaPorTipo(inicio, fin, tenant);
 
         List<PermanenciaPorTipoDTO> lista = new ArrayList<>();
         for (Object[] fila : resultados) {
@@ -67,7 +78,10 @@ public class MetricasService {
             Double promedio = fila[1] != null ? ((Number) fila[1]).doubleValue() : 0.0;
             Long max = fila[2] != null ? ((Number) fila[2]).longValue() : 0L;
             Long min = fila[3] != null ? ((Number) fila[3]).longValue() : 0L;
-            Long casosLargos = registroRepository.countPermanenciaOverUmbralByTipo(tipo, inicio, fin, umbralHoras);
+
+            Long casosLargos = registroRepository.countPermanenciaOverUmbralByTipo(
+                    tipo, inicio, fin, umbralHoras, tenant
+            );
 
             lista.add(new PermanenciaPorTipoDTO(tipo, promedio, max, min, casosLargos));
         }
@@ -78,19 +92,26 @@ public class MetricasService {
     // Turnos
     // =========================
     public TurnosDTO calcularTurnos(Instant inicio, Instant fin) {
-        Long manana = registroRepository.turnoManana(inicio, fin);
-        Long tarde = registroRepository.turnoTarde(inicio, fin);
-        Long noche = registroRepository.turnoNoche(inicio, fin);
+
+        String tenant = TenantContext.getTenantId();
+
+        Long manana = registroRepository.turnoManana(inicio, fin, tenant);
+        Long tarde = registroRepository.turnoTarde(inicio, fin, tenant);
+        Long noche = registroRepository.turnoNoche(inicio, fin, tenant);
+
         return new TurnosDTO(manana, tarde, noche);
     }
 
     // =========================
-    // Visitantes por tipo (comparativo simple)
+    // Visitantes por tipo
     // =========================
     public ComparativoDTO calcularVisitantesPorTipo(Instant inicio, Instant fin, String granularidad) {
-        Long visitantes = registroRepository.countVisitantes(inicio, fin);
-        Long proveedores = registroRepository.countProveedores(inicio, fin);
-        Long otros = registroRepository.countOtros(inicio, fin);
+
+        String tenant = TenantContext.getTenantId();
+
+        Long visitantes = registroRepository.countVisitantes(inicio, fin, tenant);
+        Long proveedores = registroRepository.countProveedores(inicio, fin, tenant);
+        Long otros = registroRepository.countOtros(inicio, fin, tenant);
 
         List<SeriePuntoDTO> serie = new ArrayList<>();
         serie.add(new SeriePuntoDTO(LocalDate.now(), visitantes + proveedores + otros));
@@ -101,35 +122,39 @@ public class MetricasService {
     // =========================
     // Reincidencias
     // =========================
-    
-        public ReincidenciaPorPlacaDTO calcularReincidenciaPorPlaca(String placa, int umbral, Instant inicio, Instant fin) {
-            List<Registro> registros = registroRepository.findAllByPlacaAndIngresoFechaHoraBetween(placa, inicio, fin);
+    public ReincidenciaPorPlacaDTO calcularReincidenciaPorPlaca(String placa, int umbral, Instant inicio, Instant fin) {
 
-            long ingresos = registros.size();
+        String tenant = TenantContext.getTenantId();
 
-            // Calcular permanencia en horas
-            List<Double> horas = registros.stream()
-                    .filter(r -> r.getSalidaFechaHora() != null)
-                    .map(r -> Duration.between(r.getIngresoFechaHora(), r.getSalidaFechaHora()).toMinutes() / 60.0)
-                    .toList();
+        List<Registro> registros = registroRepository.findAllByPlacaAndIngresoFechaHoraBetweenAndTenant(
+                placa, inicio, fin, tenant
+        );
 
-            double promedio = horas.isEmpty() ? 0 : horas.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            double max = horas.isEmpty() ? 0 : horas.stream().mapToDouble(Double::doubleValue).max().orElse(0);
-            double min = horas.isEmpty() ? 0 : horas.stream().mapToDouble(Double::doubleValue).min().orElse(0);
+        long ingresos = registros.size();
 
-            boolean frecuente = ingresos > umbral;
-            boolean sospechosa = ingresos > (umbral * 2);
+        List<Double> horas = registros.stream()
+                .filter(r -> r.getSalidaFechaHora() != null)
+                .map(r -> Duration.between(r.getIngresoFechaHora(), r.getSalidaFechaHora()).toMinutes() / 60.0)
+                .toList();
 
-            return new ReincidenciaPorPlacaDTO(placa, ingresos, promedio, max, min, frecuente, sospechosa);
-        }
-    
+        double promedio = horas.isEmpty() ? 0 : horas.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double max = horas.isEmpty() ? 0 : horas.stream().mapToDouble(Double::doubleValue).max().orElse(0);
+        double min = horas.isEmpty() ? 0 : horas.stream().mapToDouble(Double::doubleValue).min().orElse(0);
 
+        boolean frecuente = ingresos > umbral;
+        boolean sospechosa = ingresos > (umbral * 2);
+
+        return new ReincidenciaPorPlacaDTO(placa, ingresos, promedio, max, min, frecuente, sospechosa);
+    }
 
     // =========================
-    // Ranking de destinos
+    // Ranking destinos
     // =========================
     public List<RankingItemDTO> rankingDestinos(Instant inicio, Instant fin) {
-        return registroRepository.rankingDestinos(inicio, fin).stream()
+
+        String tenant = TenantContext.getTenantId();
+
+        return registroRepository.rankingDestinos(inicio, fin, tenant).stream()
                 .map(obj -> new RankingItemDTO((String) obj[0], ((Number) obj[1]).longValue()))
                 .collect(Collectors.toList());
     }
@@ -137,116 +162,96 @@ public class MetricasService {
     // =========================
     // Actividad de usuarios
     // =========================
-  
-        public List<UsuariosActividadDTO> actividadUsuarios() {
-            List<UsuariosActividadDTO> ingresos = registroRepository.contarIngresos();
-            List<UsuariosActividadDTO> salidas = registroRepository.contarSalidas();
+    public List<UsuariosActividadDTO> actividadUsuarios(Instant inicio, Instant fin) {
 
-            Map<String, UsuariosActividadDTO> mapa = new HashMap<>();
+        String tenant = TenantContext.getTenantId();
 
-            // Usamos getters en lugar de dto.usuario
-            for (UsuariosActividadDTO dto : ingresos) {
-                mapa.put(dto.getUsuario(), dto);
-            }
+        List<Object[]> ingresos = registroRepository.actividadUsuarios(inicio, fin, tenant);
 
-            for (UsuariosActividadDTO dto : salidas) {
-                mapa.compute(dto.getUsuario(), (k, v) -> {
-                    if (v == null) {
-                        return dto;
-                    } else {
-                        v.setSalidas(dto.getSalidas());
-                        return v;
-                    }
-                });
-            }
+        List<UsuariosActividadDTO> lista = new ArrayList<>();
 
-            return new ArrayList<>(mapa.values());
+        for (Object[] fila : ingresos) {
+            String username = (String) fila[0];
+            Long total = ((Number) fila[1]).longValue();
+            lista.add(new UsuariosActividadDTO(username, total, 0L));
         }
-    
 
+        return lista;
+    }
 
     // =========================
     // Anomalías
     // =========================
-  
-            public AnomaliasDTO obtenerAnomalias() {
-                // 👇 Calculamos el umbral de tiempo (ejemplo: hace 1 día)
-                Instant fechaLimite = Instant.now().minus(1, ChronoUnit.DAYS);
+    public AnomaliasDTO obtenerAnomalias() {
 
-                Long sinSalida = registroRepository.contarSinSalidaOverUmbral(fechaLimite);
-                Long incompletos = registroRepository.contarIncompletos();
+        String tenant = TenantContext.getTenantId();
+        Instant fechaLimite = Instant.now().minus(1, ChronoUnit.DAYS);
 
-                // 👇 Usamos el método fijo o flexible según tu repositorio
-                Long intentosFallidos = bitacoraRepository.contarIntentosFallidos();
-                // Long intentosFallidos = bitacoraRepository.contarPorEvento("INTENTO_FALLIDO");
+        Long sinSalida = registroRepository.contarSinSalidaOverUmbral(fechaLimite, tenant);
+        Long incompletos = registroRepository.contarIncompletos(tenant);
+        Long intentosFallidos = bitacoraRepository.contarIntentosFallidos(tenant);
+        Long duplicados = registroRepository.contarDuplicados(tenant);
+        Long fueraDeHorario = registroRepository.contarFueraDeHorario(tenant);
+        Long usuariosBloqueados = usuarioRepository.countByActivoFalseAndTenant(tenant);
+        Long registrosSinUsuario = registroRepository.contarRegistrosSinUsuario(tenant);
+        Long eventosCriticos = registroRepository.contarEventosCriticos(tenant);
 
-                Long duplicados = registroRepository.contarDuplicados();
-                Long fueraDeHorario = registroRepository.contarFueraDeHorario();
-                Long usuariosBloqueados = usuarioRepository.countByActivoFalse();
-                Long registrosSinUsuario = registroRepository.contarRegistrosSinUsuario();
-                Long eventosCriticos = registroRepository.contarEventosCriticos();
-
-                return new AnomaliasDTO(
-                    sinSalida,
-                    incompletos,
-                    intentosFallidos,
-                    duplicados,
-                    fueraDeHorario,
-                    usuariosBloqueados,
-                    registrosSinUsuario,
-                    eventosCriticos
-                );
-            }
+        return new AnomaliasDTO(
+                sinSalida,
+                incompletos,
+                intentosFallidos,
+                duplicados,
+                fueraDeHorario,
+                usuariosBloqueados,
+                registrosSinUsuario,
+                eventosCriticos
+        );
+    }
 
     // =========================
-    // Cortes (conteos por granularidad)
+    // Cortes
+    // =========================
+    public CortesDTO obtenerCortes() {
 
+        String tenant = TenantContext.getTenantId();
+        Instant ahora = Instant.now();
 
-                public CortesDTO obtenerCortes() {
-                    Instant ahora = Instant.now();
+        Instant inicioDia = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Long diario = registroRepository.contarPorRango(inicioDia, ahora, tenant);
 
-                    // Diario
-                    Instant inicioDia = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
-                    Long diario = registroRepository.contarPorRango(inicioDia, ahora);
+        LocalDate inicioSemana = LocalDate.now().with(DayOfWeek.MONDAY);
+        Instant inicioSemanaInstant = inicioSemana.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Long semanal = registroRepository.contarPorRango(inicioSemanaInstant, ahora, tenant);
 
-                    // Semanal
-                    LocalDate inicioSemana = LocalDate.now().with(DayOfWeek.MONDAY);
-                    Instant inicioSemanaInstant = inicioSemana.atStartOfDay(ZoneId.systemDefault()).toInstant();
-                    Long semanal = registroRepository.contarPorRango(inicioSemanaInstant, ahora);
+        LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
+        Instant inicioMesInstant = inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Long mensual = registroRepository.contarPorRango(inicioMesInstant, ahora, tenant);
 
-                    // Mensual
-                    LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
-                    Instant inicioMesInstant = inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant();
-                    Long mensual = registroRepository.contarPorRango(inicioMesInstant, ahora);
+        LocalDate inicioAnio = LocalDate.now().withDayOfYear(1);
+        Instant inicioAnioInstant = inicioAnio.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Long anual = registroRepository.contarPorRango(inicioAnioInstant, ahora, tenant);
 
-                    // Anual
-                    LocalDate inicioAnio = LocalDate.now().withDayOfYear(1);
-                    Instant inicioAnioInstant = inicioAnio.atStartOfDay(ZoneId.systemDefault()).toInstant();
-                    Long anual = registroRepository.contarPorRango(inicioAnioInstant, ahora);
+        Long ingresosConSalida = registroRepository.contarConSalida(tenant);
+        Long ingresosSinSalida = registroRepository.contarSinSalida(tenant);
 
-                    // Extras
-                    Long ingresosConSalida = registroRepository.contarConSalida();
-                    Long ingresosSinSalida = registroRepository.contarSinSalida();
+        Map<String, Long> porTipoVisitante = registroRepository.contarPorTipoVisitante(tenant)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> row[0].toString(),
+                        row -> (Long) row[1]
+                ));
 
-                    Map<String, Long> porTipoVisitante = registroRepository.contarPorTipoVisitante()
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    row -> row[0].toString(),
-                                    row -> (Long) row[1]
-                            ));
+        Map<String, Long> porEstado = registroRepository.contarPorEstado(tenant)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> row[0].toString(),
+                        row -> (Long) row[1]
+                ));
 
-                    Map<String, Long> porEstado = registroRepository.contarPorEstado()
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    row -> row[0].toString(),
-                                    row -> (Long) row[1]
-                            ));
-
-                    return new CortesDTO(diario, semanal, mensual, anual,
-                                         ingresosConSalida, ingresosSinSalida,
-                                         porTipoVisitante, porEstado);
-                }
-            
-
-            
-}//fin
+        return new CortesDTO(
+                diario, semanal, mensual, anual,
+                ingresosConSalida, ingresosSinSalida,
+                porTipoVisitante, porEstado
+        );
+    }
+}

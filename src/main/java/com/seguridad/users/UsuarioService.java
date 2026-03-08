@@ -1,9 +1,8 @@
-
-
 package com.seguridad.users;
 
 import com.seguridad.notificaciones.NotificacionService;
 import com.seguridad.notificaciones.TipoEvento;
+import com.seguridad.registros.RegistroRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,10 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.seguridad.registros.RegistroRepository;
-
-
-
 @Service
 @Transactional
 public class UsuarioService {
@@ -26,7 +21,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final BitacoraRepository bitacoraRepository;
     private final NotificacionService notificacionService;
-    private final RegistroRepository registroRepository; // 👈 FALTABA
+    private final RegistroRepository registroRepository;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           BitacoraRepository bitacoraRepository,
@@ -35,7 +30,7 @@ public class UsuarioService {
         this.usuarioRepository = usuarioRepository;
         this.bitacoraRepository = bitacoraRepository;
         this.notificacionService = notificacionService;
-        this.registroRepository = registroRepository; // 👈 FALTABA
+        this.registroRepository = registroRepository;
     }
 
     public Optional<Usuario> findById(Long id) {
@@ -62,18 +57,22 @@ public class UsuarioService {
         Usuario creador = usuarioRepository.findByUsername(creadorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Creador no encontrado"));
 
+        String tenant = creador.getTenant();
+
         usuario.setCreadoPor(creadorUsername);
         usuario.setActualizadoPor(creadorUsername);
         usuario.setCreadoEn(Instant.now());
         usuario.setActualizadoEn(Instant.now());
         usuario.setActivo(true);
+        usuario.setTenant(tenant);
 
         Usuario saved = usuarioRepository.save(usuario);
 
         // Bitácora
         bitacoraRepository.save(new Bitacora(
                 "Usuario creado: " + saved.getUsername(),
-                creador
+                creador,
+                tenant
         ));
 
         // Notificación
@@ -98,6 +97,8 @@ public class UsuarioService {
         Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
 
+        String tenant = actualizador.getTenant();
+
         usuario.setPasswordHash(dto.getPassword());
         usuario.setRol(dto.getRol());
         usuario.setActualizadoPor(actualizadorUsername);
@@ -108,7 +109,8 @@ public class UsuarioService {
         // Bitácora
         bitacoraRepository.save(new Bitacora(
                 "Usuario actualizado: " + usuario.getUsername(),
-                actualizador
+                actualizador,
+                tenant
         ));
 
         // Notificación
@@ -133,6 +135,8 @@ public class UsuarioService {
         Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
 
+        String tenant = actualizador.getTenant();
+
         usuario.setActivo(false);
         usuario.setActualizadoPor(actualizadorUsername);
         usuario.setActualizadoEn(Instant.now());
@@ -142,7 +146,8 @@ public class UsuarioService {
         // Bitácora
         bitacoraRepository.save(new Bitacora(
                 "Usuario desactivado: " + usuario.getUsername(),
-                actualizador
+                actualizador,
+                tenant
         ));
 
         // Notificación
@@ -154,24 +159,35 @@ public class UsuarioService {
         notificacionService.notificar(TipoEvento.USUARIO_DESACTIVADO, mensaje);
     }
 
- /*   // ============================================================
-    // ELIMINAR USUARIO
+    // ============================================================
+    // ELIMINAR USUARIO (con validación de registros)
     // ============================================================
     public void eliminarUsuario(Long id, String actualizadorUsername) {
 
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Actualizador no encontrado"));
 
-        usuarioRepository.delete(usuario);
+        String tenant = actualizador.getTenant();
+
+        // Validar si tiene registros asociados
+        if (registroRepository.existsByUsuarioEntradaId(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar el usuario porque tiene registros asociados. Debe desactivarse."
+            );
+        }
 
         // Bitácora
         bitacoraRepository.save(new Bitacora(
                 "Usuario eliminado: " + usuario.getUsername(),
-                actualizador
+                actualizador,
+                tenant
         ));
+
+        usuarioRepository.delete(usuario);
 
         // Notificación
         String mensaje = "🗑 *Usuario eliminado*\n" +
@@ -179,79 +195,9 @@ public class UsuarioService {
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
                 "👤 Eliminado por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.USUARIO_DESACTIVADO, mensaje);
+        notificacionService.notificar(TipoEvento.USUARIO_ELIMINADO, mensaje);
     }
-*/
- // ============================================================
- // ELIMINAR USUARIO
- // ============================================================
- /*public void eliminarUsuario(Long id, String actualizadorUsername) {
 
-     Usuario usuario = usuarioRepository.findById(id)
-             .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-
-     Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
-             .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
-
-     // 1️⃣ Registrar bitácora ANTES de eliminar
-     bitacoraRepository.save(new Bitacora(
-             "Usuario eliminado: " + usuario.getUsername(),
-             actualizador
-     ));
-
-     // 2️⃣ Ahora sí eliminar
-     usuarioRepository.delete(usuario);
-
-     // 3️⃣ Notificación (Telegram / Admins)
-     String mensaje = "🗑 *Usuario eliminado*\n" +
-             "👤 Username: *" + usuario.getUsername() + "*\n" +
-             "🔑 Rol: *" + usuario.getRol() + "*\n" +
-             "👤 Eliminado por: *" + actualizadorUsername + "*";
-
-     notificacionService.notificar(TipoEvento.USUARIO_DESACTIVADO, mensaje);
- }*/
-    
- // ============================================================
- // ELIMINAR USUARIO (versión segura con validación de registros)
- // ============================================================
- public void eliminarUsuario(Long id, String actualizadorUsername) {
-
-     Usuario usuario = usuarioRepository.findById(id)
-             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
-
-     Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
-             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Actualizador no encontrado"));
-
-     // 1️⃣ Validar si tiene registros asociados
-     if (registroRepository.existsByUsuarioEntradaId(id)) {
-         throw new ResponseStatusException(
-                 HttpStatus.CONFLICT,
-                 "No se puede eliminar el usuario porque tiene registros asociados. Debe desactivarse."
-         );
-     }
-   
-
-
-     // 2️⃣ Registrar bitácora ANTES de eliminar
-     bitacoraRepository.save(new Bitacora(
-             "Usuario eliminado: " + usuario.getUsername(),
-             actualizador
-     ));
-
-     // 3️⃣ Eliminar usuario
-     usuarioRepository.delete(usuario);
-
-     // 4️⃣ Notificación Telegram
-     String mensaje = "🗑 *Usuario eliminado*\n" +
-             "👤 Username: *" + usuario.getUsername() + "*\n" +
-             "🔑 Rol: *" + usuario.getRol() + "*\n" +
-             "👤 Eliminado por: *" + actualizadorUsername + "*";
-
-     notificacionService.notificar(TipoEvento.USUARIO_ELIMINADO, mensaje);
- }
-
-
-    
     // ============================================================
     // ELIMINAR BITÁCORA
     // ============================================================
@@ -260,24 +206,26 @@ public class UsuarioService {
         Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
 
+        String tenant = actualizador.getTenant();
+
         bitacoraRepository.deleteByUsuarioId(usuarioId);
 
         bitacoraRepository.save(new Bitacora(
                 "Bitácora eliminada del usuario ID: " + usuarioId,
-                actualizador
+                actualizador,
+                tenant
         ));
 
-        // Notificación
         String mensaje = "🗄 *Bitácora eliminada*\n" +
                 "👤 Usuario ID: *" + usuarioId + "*\n" +
                 "👤 Eliminada por: *" + actualizadorUsername + "*";
 
         notificacionService.notificar(TipoEvento.ALERTA_SEGURIDAD, mensaje);
     }
-    
-    
-    // para desactivar y activar usuaarioList
-    
+
+    // ============================================================
+    // CAMBIAR ESTADO (activar/desactivar)
+    // ============================================================
     public void cambiarEstado(Long id, Boolean activo, String actualizadorUsername) {
 
         Usuario usuario = usuarioRepository.findById(id)
@@ -286,17 +234,14 @@ public class UsuarioService {
         Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
 
-        // ============================================================
-        // 🔒 REGLAS DE NEGOCIO
-        // ============================================================
+        String tenant = actualizador.getTenant();
 
-        // 1️⃣ GUARDIA no puede activar/desactivar a nadie
+        // Reglas de negocio
         if (actualizador.getRol() == Usuario.Rol.GUARDIA) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "GUARDIA no puede activar ni desactivar usuarios");
         }
 
-        // 2️⃣ GERENTE solo puede activar/desactivar GUARDIAS
         if (actualizador.getRol() == Usuario.Rol.GERENTE_ADMIN &&
             usuario.getRol() != Usuario.Rol.GUARDIA) {
 
@@ -304,32 +249,20 @@ public class UsuarioService {
                     "GERENTE_ADMIN solo puede activar/desactivar usuarios con rol GUARDIA");
         }
 
-        // 3️⃣ MASTER_ADMIN puede activar/desactivar a cualquiera
-        // (no requiere validación adicional)
-
-        // ============================================================
-        // 🔄 CAMBIO DE ESTADO
-        // ============================================================
-
         usuario.setActivo(activo);
         usuario.setActualizadoPor(actualizadorUsername);
         usuario.setActualizadoEn(Instant.now());
 
         usuarioRepository.save(usuario);
 
-        // ============================================================
-        // 📝 BITÁCORA
-        // ============================================================
-
+        // Bitácora
         bitacoraRepository.save(new Bitacora(
                 (activo ? "Usuario activado: " : "Usuario desactivado: ") + usuario.getUsername(),
-                actualizador
+                actualizador,
+                tenant
         ));
 
-        // ============================================================
-        // 🔔 NOTIFICACIÓN TELEGRAM
-        // ============================================================
-
+        // Notificación
         String mensaje = (activo ? "✅ *Usuario activado*\n" : "🚫 *Usuario desactivado*\n") +
                 "👤 Username: *" + usuario.getUsername() + "*\n" +
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
@@ -341,7 +274,9 @@ public class UsuarioService {
         );
     }
 
-    
+    // ============================================================
+    // ACTUALIZACIÓN PARCIAL (Map)
+    // ============================================================
     public void actualizarUsuario(Long id, Map<String, Object> body, String actualizadorUsername) {
 
         Usuario usuario = usuarioRepository.findById(id)
@@ -350,25 +285,9 @@ public class UsuarioService {
         Usuario actualizador = usuarioRepository.findByUsername(actualizadorUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Actualizador no encontrado"));
 
-        // ============================================================
-        // 🔒 REGLAS DE NEGOCIO
-        // ============================================================
+        String tenant = actualizador.getTenant();
 
-        if (actualizador.getRol() == Usuario.Rol.GUARDIA) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "GUARDIA no puede editar usuarios");
-        }
-
-        if (actualizador.getRol() == Usuario.Rol.GERENTE_ADMIN &&
-            usuario.getRol() != Usuario.Rol.GUARDIA) {
-
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "GERENTE_ADMIN solo puede editar usuarios con rol GUARDIA");
-        }
-
-        // ============================================================
-        // ❗ Validación: evitar username duplicado
-        // ============================================================
+        // Validación username duplicado
         if (body.containsKey("username")) {
             String nuevoUsername = body.get("username").toString();
 
@@ -382,10 +301,7 @@ public class UsuarioService {
             usuario.setUsername(nuevoUsername);
         }
 
-        // ============================================================
-        // 🔄 ACTUALIZACIÓN PARCIAL
-        // ============================================================
-
+        // Actualización parcial
         if (body.containsKey("rol")) {
             usuario.setRol(Usuario.Rol.fromString(body.get("rol").toString()));
         }
@@ -399,19 +315,14 @@ public class UsuarioService {
 
         usuarioRepository.save(usuario);
 
-        // ============================================================
-        // 📝 BITÁCORA
-        // ============================================================
-
+        // Bitácora
         bitacoraRepository.save(new Bitacora(
                 "Usuario editado: " + usuario.getUsername(),
-                actualizador
+                actualizador,
+                tenant
         ));
 
-        // ============================================================
-        // 🔔 NOTIFICACIÓN TELEGRAM
-        // ============================================================
-
+        // Notificación
         String mensaje = "✏️ *Usuario editado*\n" +
                 "👤 Username: *" + usuario.getUsername() + "*\n" +
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
@@ -419,15 +330,11 @@ public class UsuarioService {
 
         notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
     }
-    
-    
-    
-    // para saber usuarios activos
-    
+
+    // ============================================================
+    // LISTAR USUARIOS ACTIVOS
+    // ============================================================
     public List<Usuario> listarUsuariosActivos() {
         return usuarioRepository.findByActivoTrue();
     }
-
-
-
 }
