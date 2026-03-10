@@ -91,7 +91,7 @@ public class RegistroService {
         registro.setIngresoFechaHora(Instant.now());
         registro.setUsuarioEntrada(usuarioActual);
 
-        // 👇 **ASIGNAR TENANT (OBLIGATORIO PARA MULTI‑TENANT)**
+        // 👇 obligatorio
         registro.setTenant(TenantContext.getTenantId());
 
         Registro guardado = registroRepository.save(registro);
@@ -126,6 +126,9 @@ public class RegistroService {
         registro.setEstado(Registro.Estado.COMPLETADO);
         registro.setUsuarioSalida(usuarioActual);
 
+        // 👇 obligatorio
+        registro.setTenant(TenantContext.getTenantId());
+
         Registro actualizado = registroRepository.save(registro);
 
         bitacoraService.registrarAccion("Salida registrada - folio " + folio, usuarioActual);
@@ -154,6 +157,9 @@ public class RegistroService {
         String placa = registro.getPlaca();
         boolean sospechoso = Boolean.TRUE.equals(registro.getSospechoso());
         String destino = registro.getDestino() != null ? registro.getDestino().getNombre() : "No especificado";
+
+        // 👇 obligatorio
+        registro.setTenant(TenantContext.getTenantId());
 
         registroRepository.delete(registro);
 
