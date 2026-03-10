@@ -2,6 +2,7 @@ package com.seguridad.users;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 
 @Entity
@@ -16,8 +17,9 @@ public class Bitacora {
     @Column(nullable = false, length = 255)
     private String descripcion;
 
+    @NotNull
     @Column(name = "fecha_hora", nullable = false)
-    private Instant fechaHora;
+    private Instant fechaHora = Instant.now(); // 👈 inicialización por defecto
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
@@ -31,7 +33,9 @@ public class Bitacora {
     // Constructores
     // =========================
 
-    public Bitacora() {}
+    public Bitacora() {
+        this.fechaHora = Instant.now(); // 👈 asegura que nunca sea null
+    }
 
     public Bitacora(String descripcion, Usuario usuario, String tenant) {
         this.descripcion = descripcion;

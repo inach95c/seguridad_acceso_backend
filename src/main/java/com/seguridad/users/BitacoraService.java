@@ -1,5 +1,6 @@
 package com.seguridad.users;
 
+import com.seguridad.config.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,10 @@ public class BitacoraService {
         bitacora.setDescripcion(descripcion);
         bitacora.setFechaHora(Instant.now());
         bitacora.setUsuario(usuario);
+
+        // 👇 obligatorio para multi‑tenant
+        bitacora.setTenant(TenantContext.getTenantId());
+
         return bitacoraRepository.save(bitacora);
     }
 
