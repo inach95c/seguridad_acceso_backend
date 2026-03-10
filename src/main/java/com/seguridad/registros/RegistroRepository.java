@@ -118,7 +118,47 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     // =========================
     // Turnos (multi‑tenant)
     // =========================
-    @Query("""
+ 
+//=========================
+//Turnos (multi‑tenant)
+//=========================
+@Query("""
+  SELECT COUNT(r)
+  FROM Registro r
+  WHERE r.ingresoFechaHora BETWEEN :inicio AND :fin
+    AND EXTRACT(HOUR FROM r.ingresoFechaHora) BETWEEN 6 AND 13
+    AND r.tenant = :tenant
+""")
+Long turnoManana(@Param("inicio") Instant inicio,
+               @Param("fin") Instant fin,
+               @Param("tenant") String tenant);
+
+@Query("""
+  SELECT COUNT(r)
+  FROM Registro r
+  WHERE r.ingresoFechaHora BETWEEN :inicio AND :fin
+    AND EXTRACT(HOUR FROM r.ingresoFechaHora) BETWEEN 14 AND 20
+    AND r.tenant = :tenant
+""")
+Long turnoTarde(@Param("inicio") Instant inicio,
+              @Param("fin") Instant fin,
+              @Param("tenant") String tenant);
+
+@Query("""
+  SELECT COUNT(r)
+  FROM Registro r
+  WHERE r.ingresoFechaHora BETWEEN :inicio AND :fin
+    AND (
+      EXTRACT(HOUR FROM r.ingresoFechaHora) >= 21
+      OR EXTRACT(HOUR FROM r.ingresoFechaHora) <= 5
+    )
+    AND r.tenant = :tenant
+""")
+Long turnoNoche(@Param("inicio") Instant inicio,
+              @Param("fin") Instant fin,
+              @Param("tenant") String tenant);
+
+   /* @Query("""
         SELECT COUNT(r)
         FROM Registro r
         WHERE r.ingresoFechaHora BETWEEN :inicio AND :fin
@@ -153,7 +193,7 @@ public interface RegistroRepository extends JpaRepository<Registro, Long> {
     Long turnoNoche(@Param("inicio") Instant inicio,
                     @Param("fin") Instant fin,
                     @Param("tenant") String tenant);
-
+*/
     // =========================
     // Visitantes por tipo (multi‑tenant)
     // =========================
