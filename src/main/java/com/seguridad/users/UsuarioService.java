@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Propagation;
+
+
 
 import java.time.Instant;
 import java.util.List;
@@ -81,7 +84,9 @@ public class UsuarioService {
                 "🔑 Rol: *" + saved.getRol() + "*\n" +
                 "👤 Creado por: *" + creadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
+        //notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
+        enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+
 
         return saved;
     }
@@ -119,7 +124,8 @@ public class UsuarioService {
                 "🔑 Nuevo rol: *" + updated.getRol() + "*\n" +
                 "👤 Actualizado por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
+       // notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
+        enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
 
         return updated;
     }
@@ -156,7 +162,8 @@ public class UsuarioService {
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
                 "👤 Desactivado por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.USUARIO_DESACTIVADO, mensaje);
+        //notificacionService.notificar(TipoEvento.USUARIO_DESACTIVADO, mensaje);
+        enviarNotificacion(TipoEvento.USUARIO_DESACTIVADO, mensaje);
     }
 
     // ============================================================
@@ -195,7 +202,9 @@ public class UsuarioService {
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
                 "👤 Eliminado por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.USUARIO_ELIMINADO, mensaje);
+       // notificacionService.notificar(TipoEvento.USUARIO_ELIMINADO, mensaje);
+        enviarNotificacion(TipoEvento.USUARIO_ELIMINADO, mensaje);
+
     }
 
     // ============================================================
@@ -220,7 +229,10 @@ public class UsuarioService {
                 "👤 Usuario ID: *" + usuarioId + "*\n" +
                 "👤 Eliminada por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.ALERTA_SEGURIDAD, mensaje);
+        //notificacionService.notificar(TipoEvento.ALERTA_SEGURIDAD, mensaje);
+        enviarNotificacion(TipoEvento.ALERTA_SEGURIDAD, mensaje);
+
+
     }
 
     // ============================================================
@@ -268,10 +280,15 @@ public class UsuarioService {
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
                 "👤 Actualizado por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(
+      /*  notificacionService.notificar(
+                activo ? TipoEvento.USUARIO_CREADO : TipoEvento.USUARIO_DESACTIVADO,
+                mensaje
+        );*/
+        enviarNotificacion(
                 activo ? TipoEvento.USUARIO_CREADO : TipoEvento.USUARIO_DESACTIVADO,
                 mensaje
         );
+
     }
 
     // ============================================================
@@ -328,7 +345,9 @@ public class UsuarioService {
                 "🔑 Rol: *" + usuario.getRol() + "*\n" +
                 "👤 Editado por: *" + actualizadorUsername + "*";
 
-        notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
+        //notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
+        enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+
     }
 
     // ============================================================
@@ -337,4 +356,10 @@ public class UsuarioService {
     public List<Usuario> listarUsuariosActivos() {
         return usuarioRepository.findByActivoTrue();
     }
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void enviarNotificacion(TipoEvento tipo, String mensaje) {
+        notificacionService.notificar(tipo, mensaje);
+    }
+
 }
