@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Propagation;
+import com.seguridad.config.TenantContext;
+
 
 
 
@@ -85,7 +87,10 @@ public class UsuarioService {
                 "👤 Creado por: *" + creadorUsername + "*";
 
         //notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
-        enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+        //enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(tenantActual, TipoEvento.USUARIO_CREADO, mensaje);
+
 
 
         return saved;
@@ -125,7 +130,10 @@ public class UsuarioService {
                 "👤 Actualizado por: *" + actualizadorUsername + "*";
 
        // notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
-        enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+       // enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(tenantActual, TipoEvento.USUARIO_CREADO, mensaje);
+
 
         return updated;
     }
@@ -163,7 +171,10 @@ public class UsuarioService {
                 "👤 Desactivado por: *" + actualizadorUsername + "*";
 
         //notificacionService.notificar(TipoEvento.USUARIO_DESACTIVADO, mensaje);
-        enviarNotificacion(TipoEvento.USUARIO_DESACTIVADO, mensaje);
+       // enviarNotificacion(TipoEvento.USUARIO_DESACTIVADO, mensaje);
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(tenantActual, TipoEvento.USUARIO_DESACTIVADO, mensaje);
+
     }
 
     // ============================================================
@@ -203,7 +214,10 @@ public class UsuarioService {
                 "👤 Eliminado por: *" + actualizadorUsername + "*";
 
        // notificacionService.notificar(TipoEvento.USUARIO_ELIMINADO, mensaje);
-        enviarNotificacion(TipoEvento.USUARIO_ELIMINADO, mensaje);
+       // enviarNotificacion(TipoEvento.USUARIO_ELIMINADO, mensaje);
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(tenantActual, TipoEvento.USUARIO_ELIMINADO, mensaje);
+
 
     }
 
@@ -230,7 +244,9 @@ public class UsuarioService {
                 "👤 Eliminada por: *" + actualizadorUsername + "*";
 
         //notificacionService.notificar(TipoEvento.ALERTA_SEGURIDAD, mensaje);
-        enviarNotificacion(TipoEvento.ALERTA_SEGURIDAD, mensaje);
+        //enviarNotificacion(TipoEvento.ALERTA_SEGURIDAD, mensaje);
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(tenantActual, TipoEvento.ALERTA_SEGURIDAD, mensaje);
 
 
     }
@@ -284,10 +300,18 @@ public class UsuarioService {
                 activo ? TipoEvento.USUARIO_CREADO : TipoEvento.USUARIO_DESACTIVADO,
                 mensaje
         );*/
-        enviarNotificacion(
+     //   enviarNotificacion(
+      //          activo ? TipoEvento.USUARIO_CREADO : TipoEvento.USUARIO_DESACTIVADO,
+       //         mensaje
+     //   );
+        
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(
+                tenantActual,
                 activo ? TipoEvento.USUARIO_CREADO : TipoEvento.USUARIO_DESACTIVADO,
                 mensaje
         );
+ 
 
     }
 
@@ -346,7 +370,9 @@ public class UsuarioService {
                 "👤 Editado por: *" + actualizadorUsername + "*";
 
         //notificacionService.notificar(TipoEvento.USUARIO_CREADO, mensaje);
-        enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+        //enviarNotificacion(TipoEvento.USUARIO_CREADO, mensaje);
+        String tenantActual = TenantContext.getTenantId();
+        enviarNotificacionConTenant(tenantActual, TipoEvento.USUARIO_CREADO, mensaje);
 
     }
 
@@ -361,5 +387,16 @@ public class UsuarioService {
     public void enviarNotificacion(TipoEvento tipo, String mensaje) {
         notificacionService.notificar(tipo, mensaje);
     }
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void enviarNotificacionConTenant(String tenant, TipoEvento tipo, String mensaje) {
+        TenantContext.setTenantId(tenant);
+        try {
+            notificacionService.notificar(tipo, mensaje);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
 
 }
