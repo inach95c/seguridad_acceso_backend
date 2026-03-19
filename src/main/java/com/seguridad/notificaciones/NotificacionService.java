@@ -10,7 +10,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+
 @Service
+@Transactional(propagation = Propagation.REQUIRES_NEW)
 public class NotificacionService {
 
     private final UsuarioRepository usuarioRepository;
