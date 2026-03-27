@@ -164,6 +164,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/destinos/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
                 
                 .requestMatchers("/api/alertas/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+                
+                .requestMatchers("/residentes/**").hasRole("RESIDENTE")
+
 
 
                 // Cualquier otro endpoint requiere autenticación

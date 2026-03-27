@@ -17,7 +17,8 @@ public class Usuario {
     public enum Rol {
         GUARDIA,
         GERENTE_ADMIN,
-        MASTER_ADMIN;
+        MASTER_ADMIN,
+    	RESIDENTE;
 
         @JsonCreator
         public static Rol fromString(String value) {
