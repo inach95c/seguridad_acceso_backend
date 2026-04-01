@@ -175,7 +175,11 @@ public class SecurityConfig {
             // 👇 PRIMERO: detectar intentos no autorizados
             .addFilterBefore(securityAlertFilter, UsernamePasswordAuthenticationFilter.class)
             // 👇 DESPUÉS: validar JWT
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        
+        
+        // 3️⃣ Tercero: TenantFilter DESPUÉS del JWT
+        .addFilterAfter(tenantFilter(), JwtAuthFilter.class);
 
         return http.build();
     }
@@ -184,6 +188,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
+    }
+    
+    @Bean
+    public TenantFilter tenantFilter() {
+        return new TenantFilter();
     }
 
    //Este es el original y el que hay que modificar en produccion
