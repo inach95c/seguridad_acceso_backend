@@ -3,9 +3,10 @@ package com.seguridad.residentes.dto;
 
 public class SolicitudDTO {
     private String visitante;
-    private String destino;
-    private String fechaHora;
+    private Long destinoId;   // 👈 nuevo campo
+    private String fechaHora; // formato ISO desde el frontend
 
+    // Getters y Setters
     public String getVisitante() {
         return visitante;
     }
@@ -13,11 +14,11 @@ public class SolicitudDTO {
         this.visitante = visitante;
     }
 
-    public String getDestino() {
-        return destino;
+    public Long getDestinoId() {
+        return destinoId;
     }
-    public void setDestino(String destino) {
-        this.destino = destino;
+    public void setDestinoId(Long destinoId) {
+        this.destinoId = destinoId;
     }
 
     public String getFechaHora() {

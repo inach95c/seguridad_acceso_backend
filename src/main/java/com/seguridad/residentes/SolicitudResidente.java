@@ -1,5 +1,6 @@
 package com.seguridad.residentes;
 
+import com.seguridad.destinos.Destino;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -20,8 +21,10 @@ public class SolicitudResidente {
     @Column(nullable = false, length = 100)
     private String visitante;
 
-    @Column(nullable = false, length = 100)
-    private String destino;
+    // 👇 Relación con la entidad Destino
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destino_id", nullable = false)
+    private Destino destino;
 
     @Column(name = "fecha_hora", nullable = false)
     private Instant fechaHora;
@@ -65,8 +68,8 @@ public class SolicitudResidente {
     public String getVisitante() { return visitante; }
     public void setVisitante(String visitante) { this.visitante = visitante; }
 
-    public String getDestino() { return destino; }
-    public void setDestino(String destino) { this.destino = destino; }
+    public Destino getDestino() { return destino; }
+    public void setDestino(Destino destino) { this.destino = destino; }
 
     public Instant getFechaHora() { return fechaHora; }
     public void setFechaHora(Instant fechaHora) { this.fechaHora = fechaHora; }

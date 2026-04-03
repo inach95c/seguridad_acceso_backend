@@ -16,16 +16,19 @@ public class ResidenteController {
         this.residenteService = residenteService;
     }
 
+    // ✅ Crear nueva solicitud de acceso
     @PostMapping("/{tenant}/{username}/solicitudes")
     public ResponseEntity<SolicitudResidente> crearSolicitud(
             @PathVariable String tenant,
             @PathVariable String username,
             @RequestBody SolicitudDTO solicitud) {
 
+        // El servicio ya se encarga de resolver el destinoId
         SolicitudResidente nueva = residenteService.crearSolicitud(tenant, solicitud, username);
         return ResponseEntity.ok(nueva);
     }
 
+    // ✅ Obtener historial de solicitudes del residente
     @GetMapping("/{tenant}/{username}/historial")
     public ResponseEntity<List<SolicitudResidente>> historial(
             @PathVariable String tenant,
