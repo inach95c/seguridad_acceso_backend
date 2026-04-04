@@ -1,59 +1,54 @@
 package com.seguridad.residentes;
 
-import com.seguridad.residentes.dto.SolicitudDTO;
 import com.seguridad.destinos.Destino;
 import com.seguridad.destinos.DestinoRepository;
-import com.seguridad.notificaciones.NotificacionService;
-import com.seguridad.notificaciones.TipoEvento;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import com.seguridad.residentes.dto.SolicitudDTO;
+
 
 @Service
 public class ResidenteService {
 
-    private final SolicitudResidenteRepository repository;
-    private final NotificacionService notificacionService;
+    private final SolicitudResidenteRepository solicitudRepository;
     private final DestinoRepository destinoRepository;
 
-    public ResidenteService(SolicitudResidenteRepository repository,
-                            NotificacionService notificacionService,
+    public ResidenteService(SolicitudResidenteRepository solicitudRepository,
                             DestinoRepository destinoRepository) {
-        this.repository = repository;
-        this.notificacionService = notificacionService;
+        this.solicitudRepository = solicitudRepository;
         this.destinoRepository = destinoRepository;
     }
 
-    public SolicitudResidente crearSolicitud(String tenant, SolicitudDTO dto, String residenteUsername) {
-        // Buscar el destino por ID
-        Destino destino = destinoRepository.findById(dto.getDestinoId())
+    // ============================================================
+    // ✅ Crear solicitud de acceso
+    // ============================================================
+    public SolicitudResidente crearSolicitud(String tenant, SolicitudDTO dto, String username) {
+
+        // 1. Buscar destino por ID
+        Destino destino = destinoRepository.findById((long) dto.getDestinoId())
                 .orElseThrow(() -> new RuntimeException("Destino no encontrado"));
 
+        // 2. Crear nueva solicitud
         SolicitudResidente solicitud = new SolicitudResidente();
         solicitud.setTenant(tenant);
-        solicitud.setResidenteUsername(residenteUsername);
+        solicitud.setResidenteUsername(username);
         solicitud.setVisitante(dto.getVisitante());
-        solicitud.setDestino(destino); // relación con la entidad Destino
-        solicitud.setFechaHora(Instant.parse(dto.getFechaHora()));
+        solicitud.setDestino(destino);
+        solicitud.setFechaHora(Instant.parse(dto.getFechaHora() + "Z"));
         solicitud.setEstado("PENDIENTE");
 
-        SolicitudResidente saved = repository.save(solicitud);
-
-        // Notificar usando infraestructura existente
-        String mensaje = "🔔 Nueva solicitud de acceso\n" +
-                         "Residente: " + residenteUsername + "\n" +
-                         "Visitante: " + dto.getVisitante() + "\n" +
-                         "Destino: " + destino.getNombre() + "\n" +
-                         "Fecha/Hora: " + dto.getFechaHora() + "\n" +
-                         "Tenant: " + tenant;
-
-        notificacionService.notificar(TipoEvento.SOLICITUD_RESIDENTE, mensaje);
-
-        return saved;
+        // 3. Guardar en BD
+        return solicitudRepository.save(solicitud);
     }
 
-    public List<SolicitudResidente> obtenerHistorial(String tenant, String residenteUsername) {
-        return repository.findByTenantAndResidenteUsernameOrderByFechaHoraDesc(tenant, residenteUsername);
+    // ============================================================
+    // ✅ Obtener historial del residente
+    // ============================================================
+    public List<SolicitudResidente> obtenerHistorial(String tenant, String username) {
+        return solicitudRepository.findByTenantAndResidenteUsernameOrderByCreadoEnDesc(
+                tenant, username
+        );
     }
 }

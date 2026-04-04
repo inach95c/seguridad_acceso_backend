@@ -1,12 +1,22 @@
-// SolicitudDTO.java
 package com.seguridad.residentes.dto;
 
-public class SolicitudDTO {
-    private String visitante;
-    private Long destinoId;   // 👈 nuevo campo
-    private String fechaHora; // formato ISO desde el frontend
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
+public class SolicitudDTO {
+
+    @NotBlank(message = "El nombre del visitante es obligatorio")
+    private String visitante;
+
+    @NotNull(message = "El destino es obligatorio")
+    private Long destinoId;
+
+    @NotBlank(message = "La fecha y hora son obligatorias")
+    private String fechaHora; // formato ISO enviado desde Angular
+
+    // =========================
     // Getters y Setters
+    // =========================
     public String getVisitante() {
         return visitante;
     }

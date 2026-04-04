@@ -1,8 +1,9 @@
 package com.seguridad.residentes;
 
-import com.seguridad.residentes.dto.SolicitudDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.seguridad.residentes.dto.SolicitudDTO;
 
 import java.util.List;
 
@@ -16,25 +17,32 @@ public class ResidenteController {
         this.residenteService = residenteService;
     }
 
-    // ✅ Crear nueva solicitud de acceso
+    // ============================================================
+    // ✅ Crear solicitud de acceso
+    // POST /residentes/{tenant}/{username}/solicitudes
+    // ============================================================
     @PostMapping("/{tenant}/{username}/solicitudes")
     public ResponseEntity<SolicitudResidente> crearSolicitud(
             @PathVariable String tenant,
             @PathVariable String username,
-            @RequestBody SolicitudDTO solicitud) {
-
-        // El servicio ya se encarga de resolver el destinoId
-        SolicitudResidente nueva = residenteService.crearSolicitud(tenant, solicitud, username);
+            @RequestBody SolicitudDTO solicitudDTO
+    ) {
+        SolicitudResidente nueva = residenteService.crearSolicitud(tenant, solicitudDTO, username);
         return ResponseEntity.ok(nueva);
     }
 
-    // ✅ Obtener historial de solicitudes del residente
+    // ============================================================
+    // ✅ Obtener historial del residente
+    // GET /residentes/{tenant}/{username}/historial
+    // ============================================================
     @GetMapping("/{tenant}/{username}/historial")
-    public ResponseEntity<List<SolicitudResidente>> historial(
+    public ResponseEntity<List<SolicitudResidente>> obtenerHistorial(
             @PathVariable String tenant,
-            @PathVariable String username) {
+            @PathVariable String username
+    ) {
+        List<SolicitudResidente> historial =
+                residenteService.obtenerHistorial(tenant, username);
 
-        List<SolicitudResidente> historial = residenteService.obtenerHistorial(tenant, username);
         return ResponseEntity.ok(historial);
     }
 }
