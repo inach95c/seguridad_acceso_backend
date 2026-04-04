@@ -1,5 +1,6 @@
 package com.seguridad.residentes;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.seguridad.destinos.Destino;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -21,9 +22,10 @@ public class SolicitudResidente {
     @Column(nullable = false, length = 100)
     private String visitante;
 
-    // 👇 Relación con la entidad Destino
+    // 👇 Relación con Destino (lazy para eficiencia)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destino_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Destino destino;
 
     @Column(name = "fecha_hora", nullable = false)
@@ -41,6 +43,19 @@ public class SolicitudResidente {
     @Column(name = "actualizado_en")
     private Instant actualizadoEn;
 
+    // =========================
+    // Campo virtual para enviar el nombre del destino al frontend
+    // =========================
+    @Transient
+    private String destinoNombre;
+
+    public String getDestinoNombre() {
+        return destino != null ? destino.getNombre() : null;
+    }
+
+    // =========================
+    // Hooks de auditoría
+    // =========================
     @PrePersist
     protected void onCreate() {
         Instant now = Instant.now();
