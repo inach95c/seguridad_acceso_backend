@@ -1,4 +1,4 @@
-package com.seguridad.destinos;
+/*package com.seguridad.destinos;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,5 +50,51 @@ public class DestinoService {
         Destino destino = destinoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Destino no encontrado"));
         destinoRepository.delete(destino);
+    }
+}*/
+
+package com.seguridad.destinos;
+
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class DestinoService {
+
+    private final DestinoRepository destinoRepository;
+
+    public DestinoService(DestinoRepository destinoRepository) {
+        this.destinoRepository = destinoRepository;
+    }
+
+    // ✅ Listar todos los destinos activos (sin filtrar por tenant)
+    public List<Destino> listarActivos() {
+        return destinoRepository.findAll()
+                .stream()
+                .filter(d -> Boolean.TRUE.equals(d.getActivo())) // 👈 corrección aquí
+                .toList();
+    }
+
+    // ✅ Listar destinos activos filtrados por tenant
+    public List<Destino> listarActivosPorTenant(String tenant) {
+        return destinoRepository.findByActivoTrueAndTenant(tenant);
+    }
+
+    // Crear destino
+    public Destino crearDestino(Destino destino) {
+        return destinoRepository.save(destino);
+    }
+
+    // Desactivar destino
+    public void desactivarDestino(Long id) {
+        Destino destino = destinoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Destino no encontrado"));
+        destino.setActivo(false);
+        destinoRepository.save(destino);
+    }
+
+    // Eliminar destino
+    public void eliminarDestino(Long id) {
+        destinoRepository.deleteById(id);
     }
 }
