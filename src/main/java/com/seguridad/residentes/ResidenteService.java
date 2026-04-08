@@ -5,9 +5,10 @@ import com.seguridad.destinos.DestinoRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import com.seguridad.residentes.dto.SolicitudDTO;
-
 
 @Service
 public class ResidenteService {
@@ -22,12 +23,12 @@ public class ResidenteService {
     }
 
     // ============================================================
-    // ✅ Crear solicitud de acceso
+    // ✅ Crear solicitud de acceso (versión corregida)
     // ============================================================
     public SolicitudResidente crearSolicitud(String tenant, SolicitudDTO dto, String username) {
 
         // 1. Buscar destino por ID
-        Destino destino = destinoRepository.findById((long) dto.getDestinoId())
+        Destino destino = destinoRepository.findById(dto.getDestinoId())
                 .orElseThrow(() -> new RuntimeException("Destino no encontrado"));
 
         // 2. Crear nueva solicitud
@@ -36,10 +37,15 @@ public class ResidenteService {
         solicitud.setResidenteUsername(username);
         solicitud.setVisitante(dto.getVisitante());
         solicitud.setDestino(destino);
-        solicitud.setFechaHora(Instant.parse(dto.getFechaHora() + "Z"));
+
+        // 3. Conversión segura de fecha/hora desde Angular
+        LocalDateTime ldt = LocalDateTime.parse(dto.getFechaHora());
+        Instant fechaHoraUTC = ldt.atZone(ZoneId.of("UTC")).toInstant();
+        solicitud.setFechaHora(fechaHoraUTC);
+
         solicitud.setEstado("PENDIENTE");
 
-        // 3. Guardar en BD
+        // 4. Guardar en BD
         return solicitudRepository.save(solicitud);
     }
 
