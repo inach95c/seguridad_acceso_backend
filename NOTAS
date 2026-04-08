@@ -87,4 +87,76 @@ Las contraseñas ahora cumplen con BCrypt y Spring Security las valida sin error
 El endpoint /api/auth/encode quedó operativo para generar contraseñas cuando se necesiten.
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////seguridad //////////////////////////////////////////////////////////
+
+@Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, SecurityAlertFilter securityAlertFilter) throws Exception {
+        JwtAuthFilter jwtFilter = new JwtAuthFilter(jwtUtil, userDetailsService);
+
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // 👇 permitir acceso público a Angular y recursos estáticos
+                .requestMatchers("/", "/inicio", "/index.html", "/favicon.ico",
+                                 "/assets/**", "/static/**",
+                                 "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.ico").permitAll()
+
+                // 👇 permitir acceso público a imágenes
+                .requestMatchers("/uploads/**").permitAll()
+
+                // login
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/ping").permitAll()
+                
+                // 👇 PERMITIR EL ENDPOINT PARA GENERAR HASHES Password
+                .requestMatchers("/api/auth/encode").permitAll()
+
+
+
+                // 👇 permitir acceso público al webhook de Telegram
+                .requestMatchers("/api/telegram/webhook").permitAll()
+
+                // Rutas protegidas
+                .requestMatchers("/api/registros/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+                .requestMatchers("/api/registros/completados/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
+
+                .requestMatchers("/api/bitacoras/**").hasRole("MASTER_ADMIN")
+
+                .requestMatchers("/api/reportes/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
+                .requestMatchers("/api/reportes/permanencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
+                .requestMatchers("/api/reportes/reincidencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
+
+                .requestMatchers("/api/metricas/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+
+                .requestMatchers("/api/usuarios/**").hasAnyRole("MASTER_ADMIN", "GERENTE_ADMIN")
+
+                .requestMatchers("/api/destinos/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+                
+                .requestMatchers("/api/alertas/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+                
+                .requestMatchers("/residentes/**").hasRole("RESIDENTE")
+
+
+
+                // Cualquier otro endpoint requiere autenticación
+                .anyRequest().authenticated()
+            )
+            // 👇 PRIMERO: detectar intentos no autorizados
+            .addFilterBefore(securityAlertFilter, UsernamePasswordAuthenticationFilter.class)
+            // 👇 DESPUÉS: validar JWT
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        
+        
+        // 3️⃣ Tercero: TenantFilter DESPUÉS del JWT
+        .addFilterAfter(tenantFilter(), JwtAuthFilter.class);
+
+        return http.build();
+    }
+    
+    
+    //////////////////////////////////////////////////////////////////////////////////////
+
+
+

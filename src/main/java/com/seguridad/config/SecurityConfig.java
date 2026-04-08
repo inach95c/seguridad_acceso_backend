@@ -19,6 +19,8 @@ import com.seguridad.security.SecurityAlertFilter;
 
 
 import java.util.List;
+import org.springframework.http.HttpMethod;
+
 
 @Configuration
 public class SecurityConfig {
@@ -32,91 +34,7 @@ public class SecurityConfig {
     }
     
    
-   /* @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        JwtAuthFilter jwtFilter = new JwtAuthFilter(jwtUtil, userDetailsService);
-
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login").permitAll()
-                
-                .requestMatchers("/api/registros/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/registros/completados/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/bitacoras/**").hasAnyRole("MASTER_ADMIN")
-                .requestMatchers("/api/reportes/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/reportes/permanencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/reportes/reincidencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/metricas/**").hasAnyAuthority("MASTER_ADMIN", "GERENTE_ADMIN")
-
-
-                
-                .requestMatchers("/api/usuarios/**").hasAnyRole("MASTER_ADMIN", "GERENTE_ADMIN")
-                .requestMatchers("/api/destinos/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-                .anyRequest().authenticated()
-            ) 
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-*/
-    
-  /*  @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http,SecurityAlertFilter securityAlertFilter) throws Exception {
-        JwtAuthFilter jwtFilter = new JwtAuthFilter(jwtUtil, userDetailsService);
-
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-            		
-            	
-            		
-                // 👇 permitir acceso público a imágenes 
-                .requestMatchers("/uploads/**").permitAll()
-
-                // login
-                .requestMatchers("/api/auth/login").permitAll()
-
-                // 👇 permitir acceso público al webhook de Telegram
-                .requestMatchers("/api/telegram/webhook").permitAll()
-
-                // Registros
-                .requestMatchers("/api/registros/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/registros/completados/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-
-                // Bitácoras
-                .requestMatchers("/api/bitacoras/**").hasRole("MASTER_ADMIN")
-
-                // Reportes generales
-                .requestMatchers("/api/reportes/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/reportes/permanencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/reportes/reincidencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-
-                // Métricas
-                .requestMatchers("/api/metricas/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-
-                // Usuarios
-                .requestMatchers("/api/usuarios/**").hasAnyRole("MASTER_ADMIN", "GERENTE_ADMIN")
-
-                // Destinos
-                .requestMatchers("/api/destinos/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-
-                // Cualquier otro endpoint requiere autenticación
-                .anyRequest().authenticated()
-            )
-            //.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-         // 👇 PRIMERO: detectar intentos no autorizados
-            .addFilterBefore(securityAlertFilter, UsernamePasswordAuthenticationFilter.class) 
-            // 👇 DESPUÉS: validar JWT
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-*/
+  
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, SecurityAlertFilter securityAlertFilter) throws Exception {
@@ -127,62 +45,103 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 👇 permitir acceso público a Angular y recursos estáticos
+
+                // ============================================================
+                // 🔓 RECURSOS PÚBLICOS (Angular, assets, imágenes, login)
+                // ============================================================
                 .requestMatchers("/", "/inicio", "/index.html", "/favicon.ico",
                                  "/assets/**", "/static/**",
-                                 "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.ico").permitAll()
+                                 "/**/*.js", "/**/*.css", "/**/*.png", "/**/*.jpg", "/**/*.ico")
+                    .permitAll()
 
-                // 👇 permitir acceso público a imágenes
                 .requestMatchers("/uploads/**").permitAll()
-
-                // login
                 .requestMatchers("/api/auth/login").permitAll()
-                .requestMatchers("/ping").permitAll()
-                
-                // 👇 PERMITIR EL ENDPOINT PARA GENERAR HASHES Password
                 .requestMatchers("/api/auth/encode").permitAll()
-
-
-
-                // 👇 permitir acceso público al webhook de Telegram
                 .requestMatchers("/api/telegram/webhook").permitAll()
+                .requestMatchers("/ping").permitAll()
 
-                // Rutas protegidas
-                .requestMatchers("/api/registros/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/registros/completados/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
+                // ============================================================
+                // 🔐 MÓDULO REGISTROS (solo guardias y admins)
+                // ============================================================
+                .requestMatchers("/api/registros/**")
+                    .hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
 
-                .requestMatchers("/api/bitacoras/**").hasRole("MASTER_ADMIN")
+                .requestMatchers("/api/registros/completados/**")
+                    .hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
 
-                .requestMatchers("/api/reportes/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/reportes/permanencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
-                .requestMatchers("/api/reportes/reincidencia/**").hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
+                // ============================================================
+                // 🔐 BITÁCORAS (solo master)
+                // ============================================================
+                .requestMatchers("/api/bitacoras/**")
+                    .hasRole("MASTER_ADMIN")
 
-                .requestMatchers("/api/metricas/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+                // ============================================================
+                // 🔐 REPORTES (solo admins)
+                // ============================================================
+                .requestMatchers("/api/reportes/**")
+                    .hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
 
-                .requestMatchers("/api/usuarios/**").hasAnyRole("MASTER_ADMIN", "GERENTE_ADMIN")
+                .requestMatchers("/api/reportes/permanencia/**")
+                    .hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
 
-                .requestMatchers("/api/destinos/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-                
-                .requestMatchers("/api/alertas/**").hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
-                
-                .requestMatchers("/residentes/**").hasRole("RESIDENTE")
+                .requestMatchers("/api/reportes/reincidencia/**")
+                    .hasAnyRole("GERENTE_ADMIN", "MASTER_ADMIN")
 
+                // ============================================================
+                // 🔐 MÉTRICAS (guardias y admins)
+                // ============================================================
+                .requestMatchers("/api/metricas/**")
+                    .hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
 
+                // ============================================================
+                // 🔐 USUARIOS (solo admins)
+                // ============================================================
+                .requestMatchers("/api/usuarios/**")
+                    .hasAnyRole("MASTER_ADMIN", "GERENTE_ADMIN")
 
-                // Cualquier otro endpoint requiere autenticación
+                // ============================================================
+                // 🔐 DESTINOS (residente puede ver, admins modifican)
+                // ============================================================
+                .requestMatchers(HttpMethod.GET, "/api/destinos/**")
+                    .hasAnyRole("RESIDENTE", "GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+
+                .requestMatchers(HttpMethod.POST, "/api/destinos/**")
+                    .hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+
+                .requestMatchers(HttpMethod.PUT, "/api/destinos/**")
+                    .hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+
+                .requestMatchers(HttpMethod.DELETE, "/api/destinos/**")
+                    .hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+
+                // ============================================================
+                // 🔐 ALERTAS (solo guardias y admins)
+                // ============================================================
+                .requestMatchers("/api/alertas/**")
+                    .hasAnyRole("GUARDIA", "GERENTE_ADMIN", "MASTER_ADMIN")
+
+                // ============================================================
+                // 🔐 MÓDULO RESIDENTES (solo residentes)
+                // ============================================================
+                .requestMatchers("/residentes/**")
+                    .hasRole("RESIDENTE")
+
+                // ============================================================
+                // 🔐 CUALQUIER OTRO ENDPOINT REQUIERE AUTENTICACIÓN
+                // ============================================================
                 .anyRequest().authenticated()
             )
-            // 👇 PRIMERO: detectar intentos no autorizados
+
+            // ============================================================
+            // 🔐 FILTROS: ALERTA → JWT → TENANT
+            // ============================================================
             .addFilterBefore(securityAlertFilter, UsernamePasswordAuthenticationFilter.class)
-            // 👇 DESPUÉS: validar JWT
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-        
-        
-        // 3️⃣ Tercero: TenantFilter DESPUÉS del JWT
-        .addFilterAfter(tenantFilter(), JwtAuthFilter.class);
+            .addFilterAfter(tenantFilter(), JwtAuthFilter.class);
 
         return http.build();
     }
+
 
     
     @Bean
