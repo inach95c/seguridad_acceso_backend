@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import com.seguridad.residentes.dto.SolicitudDTO;
 
@@ -37,14 +38,13 @@ public class ResidenteService {
         solicitud.setVisitante(dto.getVisitante());
         solicitud.setDestino(destino);
 
-        // Conversión flexible de fecha/hora
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
-                "[yyyy-MM-dd'T'HH:mm]"
-              + "[yyyy-MM-dd'T'HH:mm:ss]"
-              + "[yyyy-MM-dd'T'HH:mm:ss.SSS]"
-              + "[yyyy-MM-dd'T'HH:mm'Z']"
-              + "[yyyy-MM-dd'T'HH:mm:ss'Z']"
-        );
+        // Conversión robusta de fecha/hora
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                .optionalStart()
+                .appendOffsetId()
+                .optionalEnd()
+                .toFormatter();
 
         LocalDateTime ldt = LocalDateTime.parse(dto.getFechaHora(), formatter);
         Instant fechaHoraUTC = ldt.atZone(ZoneId.of("UTC")).toInstant();
@@ -54,6 +54,7 @@ public class ResidenteService {
 
         return solicitudRepository.save(solicitud);
     }
+
 
     // ============================================================
     // ✅ Obtener historial del residente
