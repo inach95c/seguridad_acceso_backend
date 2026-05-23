@@ -93,25 +93,26 @@ public class ResidenteService {
 //============================================================
 //🔴 Cancelar solicitud (solo residente dueño y si está PENDIENTE)
 //============================================================
-public void cancelarSolicitud(String tenant, String username, Long id) {
-  SolicitudResidente solicitud = solicitudRepository.findById(id)
-          .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+ public void cancelarSolicitud(String tenant, String username, Long id) {
+	    SolicitudResidente solicitud = solicitudRepository.findById(id)
+	            .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
 
-  if (!solicitud.getTenant().equals(tenant)) {
-      throw new RuntimeException("No autorizado: tenant no coincide");
-  }
+	    if (!solicitud.getTenant().equals(tenant)) {
+	        throw new IllegalArgumentException("Tenant no coincide");
+	    }
 
-  if (!solicitud.getResidenteUsername().equals(username)) {
-      throw new RuntimeException("No autorizado: la solicitud no pertenece a este residente");
-  }
+	    if (!solicitud.getResidenteUsername().equals(username)) {
+	        throw new IllegalArgumentException("La solicitud no pertenece a este residente");
+	    }
 
-  if (!"PENDIENTE".equals(solicitud.getEstado())) {
-      throw new RuntimeException("Solo se pueden cancelar solicitudes en estado PENDIENTE");
-  }
+	    if (!"PENDIENTE".equals(solicitud.getEstado())) {
+	        throw new IllegalArgumentException("Solo se pueden cancelar solicitudes en estado PENDIENTE");
+	    }
 
-  solicitud.setEstado("CANCELADA");
-  solicitudRepository.save(solicitud);
-}
+	    solicitud.setEstado("CANCELADA");
+	    solicitudRepository.save(solicitud);
+	}
+
 
 
 

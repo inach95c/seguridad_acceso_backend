@@ -72,14 +72,19 @@ public class ResidenteController {
     // PUT /residentes/{tenant}/{username}/solicitudes/{id}/cancelar
     // ============================================================
     @PutMapping("/{tenant}/{username}/solicitudes/{id}/cancelar")
-    public ResponseEntity<Void> cancelarSolicitud(
+    public ResponseEntity<?> cancelarSolicitud(
             @PathVariable String tenant,
             @PathVariable String username,
             @PathVariable Long id
     ) {
-        residenteService.cancelarSolicitud(tenant, username, id);
-        return ResponseEntity.ok().build();
+        try {
+            residenteService.cancelarSolicitud(tenant, username, id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
+
 
 
 
