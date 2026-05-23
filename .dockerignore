@@ -1,0 +1,34 @@
+# Ignorar Git
+.git
+.gitignore
+
+# Ignorar dependencias y caches
+node_modules
+target
+build
+dist
+
+# Ignorar configuraciones locales
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.class
+
+# Ignorar IDEs y configuraciones
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignorar archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar credenciales locales
+.env
+*.pem
+*.crt
+*.key
